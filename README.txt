@@ -13,12 +13,12 @@ The plugin enables to generation and management of download codes for .zip files
 The plugin enables to generation and management of download codes for .zip files. It was written to enable the free download of records and CDs with dedicated codes printed on the cover of the releases or on separate download cards.
 
 With the plugin you can:
-* Create and manage **releases**, which are items bundled as zips (e.g. digital versions of vinyl albums) to be downloaded with download codes.
-* Specify the allowed number of downloads for each release.
-* Create alphanumeric **download codes** for each release using a prefix for each code. The number of characters can be set for each code.
-* Review downloads codes and set them to "final" when you want to use and distribute them.
-* Export final download codes in a plain list.
-* Analyze the use of the download codes.
+*   Create and manage **releases**, which are items bundled as zips (e.g. digital versions of vinyl albums) to be downloaded with download codes.
+*   Specify the allowed number of downloads for each release.
+*   Create alphanumeric **download codes** for each release using a prefix for each code. The number of characters can be set for each code.
+*   Review downloads codes and set them to "final" when you want to use and distribute them.
+*   Export final download codes in a plain list.
+*   Analyze the use of the download codes.
 
 == Installation ==
 
