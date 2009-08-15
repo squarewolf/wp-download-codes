@@ -451,6 +451,8 @@ function dc_admin_help() {
 	echo '<div class="wrap">';
 	echo '<h2>Download Codes &raquo; Help</h2>';
 	
+	echo '<p>Please visit the homepage of the plugin for more information: <a href="http://wordpress.org/extend/plugins/wp-download-codes/">http://wordpress.org/extend/plugins/wp-download-codes/</a>.</p>';
+	
 	echo '</div>';
 }
 ?>
