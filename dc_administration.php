@@ -19,13 +19,6 @@
 function dc_init() {
 	global $wpdb;
 
-	// Get location of downloadable archives
-	$dc_zip_location = get_option("dc_zip_location");
-	if ($dc_zip_location == "") {
-		$dc_zip_location = get_option("upload_path");
-		add_option('dc_zip_location',$dc_zip_location);
-	}
-
 	require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 	
 	$sql = "CREATE TABLE `" . dc_tbl_codes() . "` (
@@ -83,13 +76,13 @@ function dc_admin_menu() {
 	add_submenu_page( __FILE__, 'Download Code Settings', 'Settings', 8, __FILE__, 'dc_admin_settings');
 
 	// Manage Downloads
-	add_submenu_page( __FILE__, 'Manage Releases', 'Manage Releases', 8, "dc-manage-releases", 'dc_admin_releases');
+	add_submenu_page( __FILE__, 'Manage Releases', 'Manage Releases', 8, 'dc-manage-releases', 'dc_admin_releases');
 	
 	// Manage Codes
-	add_submenu_page( __FILE__, 'Manage Download Codes', 'Manage Codes', 8, "dc-manage-codes", 'dc_admin_codes');
+	add_submenu_page( __FILE__, 'Manage Download Codes', 'Manage Codes', 8, 'dc-manage-codes', 'dc_admin_codes');
 	
 	// Help
-	add_submenu_page( __FILE__, 'Download Codes Help', 'Help', 8, "dc-help", 'dc_admin_help');
+	add_submenu_page( __FILE__, 'Download Codes Help', 'Help', 8, 'dc-help', 'dc_admin_help');
 
 }
 
@@ -102,17 +95,26 @@ function dc_admin_settings() {
 	
 	// Overwrite existing options
 	if (isset($_POST['submit'])) {
-		$dc_zip_location = $_POST['dc_zip_location'];
+		$dc_zip_location = trim($_POST['dc_zip_location']);
 		$dc_max_attempts = $_POST['dc_max_attempts'];
 		
-		// Add slash to zip location if necessary
-		if (substr($dc_zip_location,-1) != '/') {
-			$dc_zip_location .= '/';
+		// Update zip location
+		if ( $dc_zip_location != '' ) {
+			if ( substr( $dc_zip_location, -1 ) != '/') {
+				$dc_zip_location .= '/';
+			}
+			update_option( 'dc_zip_location', $dc_zip_location );
 		}
 		
-		update_option( 'dc_zip_location', $dc_zip_location );
+		// Update number of maximum attempts
+		if ( is_numeric( $dc_max_attempts ) ) {
+			update_option( 'dc_max_attempts' , $dc_max_attempts );
+		}
 		
-		update_option( 'dc_max_attempts' , $dc_max_attempts );
+		// Print message
+		echo '<div id="message" class="updated fade">';
+		echo __( 'Your changes were saved.' );
+		echo '</div>';
 	}
 	
 	echo '<form method="post" action="">';
@@ -126,7 +128,7 @@ function dc_admin_settings() {
 	
 	echo '<tr valign="top">';
 	echo '<th scope="row">Maximum invalid download attempts</th>';
-	echo '<td><input type="text" name="dc_max_attempts" size="10" value="' . get_option( 'dc_max_attempts' ) . '" />';
+	echo '<td><input type="text" name="dc_max_attempts" size="10" value="' . ( get_option( 'dc_max_attempts' ) == '' ? 3 : get_option( 'dc_max_attempts' ) ) . '" />';
 	echo '</tr>';
 	
 	echo '</table>';
@@ -157,13 +159,11 @@ function dc_admin_releases() {
 		// Add/Edit release
 		//*********************************************
 
-		// Get current release
-		$release = $wpdb->get_row( "SELECT * FROM " . dc_tbl_releases() . " WHERE ID = $get_release ");
-
 		if ( isset($_POST['submit']) ) {
 			$post_title = trim($_POST['title']);
 			$post_filename = $_POST['filename'];
 			$post_release = $_POST['release'];
+			$get_release = $post_release;
 			$post_downloads = $_POST['downloads'];
 			
 			// Update or insert entry if title is not empty
@@ -173,6 +173,10 @@ function dc_admin_releases() {
 					$wpdb->insert(	dc_tbl_releases(), 
 									array( 'title' => $post_title, 'filename' => $post_filename, 'allowed_downloads' => $post_downloads),
 									array( '%s', '%s', '%d') );
+					
+					// Get ID of new release
+					$get_release = $wpdb->insert_id;
+					
 					$message = "The release was added successfully.";
 				}
 				else {
@@ -188,49 +192,53 @@ function dc_admin_releases() {
 				$message = "The title must not be empty.";		
 			}
 			
-			// Echo message
-			echo '<p>' . $message . '</p>';
+			// Print message
+			echo '<div id="message" class="updated fade">';
+			echo __( $message );
+			echo '</div>';
 		}
-		else {
-			// Write page subtitle
-			echo '<h3>' . ( ( 'new' == $get_action ) ? 'Add New' : 'Edit' ) . ' Release</h3>';
+		
+		// Get current release
+		$release = $wpdb->get_row( "SELECT * FROM " . dc_tbl_releases() . " WHERE ID = $get_release ");
+		
+		// Write page subtitle
+		echo '<h3>' . ( ( 'new' == $get_action ) ? 'Add New' : 'Edit' ) . ' Release</h3>';
 
-			echo '<form method="post" action="">';
-			echo '<input type="hidden" name="release" value="' . $release->ID . '" />';
-	
-			echo '<table class="form-table">';
-			
-			echo '<tr valign="top">';
-			echo '<th scope="row">Title</th>';
-			echo '<td><input type="text" name="title" value="' . $release->title . '" />';
-			echo '</tr>';
-			
-			// Get zip files in download folder
-			$files = scandir( dc_zip_location() );
-			
-			echo '<tr valign="top">';
-			echo '<th scope="row">File</th>';
-			echo '<td>' . dc_zip_location( 'short' ) . ' <select name="filename">';
-			foreach ($files as $filename) {
-				if (substr($filename,-4) == ".zip") {
-					echo '<option' . ( $filename == $release->filename ? ' selected="selected"' : '' ) . '>' . $filename . '</option>';
-				}
+		echo '<form method="post" action="">';
+		echo '<input type="hidden" name="release" value="' . $release->ID . '" />';
+
+		echo '<table class="form-table">';
+		
+		echo '<tr valign="top">';
+		echo '<th scope="row">Title</th>';
+		echo '<td><input type="text" name="title" value="' . $release->title . '" />';
+		echo '</tr>';
+		
+		// Get zip files in download folder
+		$files = scandir( dc_zip_location() );
+		
+		echo '<tr valign="top">';
+		echo '<th scope="row">File</th>';
+		echo '<td>' . dc_zip_location( 'short' ) . ' <select name="filename">';
+		foreach ($files as $filename) {
+			if (substr($filename,-4) == ".zip") {
+				echo '<option' . ( $filename == $release->filename ? ' selected="selected"' : '' ) . '>' . $filename . '</option>';
 			}
-			echo '</select></td>';
-			echo '</tr>';
-			
-			echo '<tr valign="top">';
-			echo '<th scope="row">Allowed downloads</th>';
-			echo '<td><input type="text" name="downloads" value="' . ( $release->allowed_downloads > 0 ? $release->allowed_downloads : 3 ) . '" />';
-			echo '</tr>';
-			
-			echo '</table>';
-			echo '<p class="submit">';
-			echo '<input type="submit" name="submit" class="button-secondary" value="Submit" />';
-			echo '</p>';
-	
-			echo '</form>';
 		}
+		echo '</select></td>';
+		echo '</tr>';
+		
+		echo '<tr valign="top">';
+		echo '<th scope="row">Allowed downloads</th>';
+		echo '<td><input type="text" name="downloads" value="' . ( $release->allowed_downloads > 0 ? $release->allowed_downloads : 3 ) . '" />';
+		echo '</tr>';
+		
+		echo '</table>';
+		echo '<p class="submit">';
+		echo '<input type="submit" name="submit" class="button-secondary" value="Submit" />';
+		echo '</p>';
+
+		echo '</form>';
 	}
 	else {
 		//*********************************************

@@ -4,7 +4,7 @@ Donate link: http://wordpress.org/extend/plugins/wp-download-codes/
 Tags: download, download code, code generator
 Requires at least: 2.5
 Tested up to: 2.8.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 
 The plugin enables to generation and management of download codes for .zip files. It was written to enable the free download of records and CDs with dedicated codes printed on the cover of the releases or on separate download cards.
 
@@ -13,22 +13,23 @@ The plugin enables to generation and management of download codes for .zip files
 The plugin enables to generation and management of download codes for .zip files. It was written to enable the free download of records and CDs with dedicated codes printed on the cover of the releases or on separate download cards.
 
 With the plugin you can:
+
 *   Create and manage **releases**, which are items bundled as zips (e.g. digital versions of vinyl albums) to be downloaded with download codes.
 *   Specify the allowed number of downloads for each release.
-*   Create alphanumeric **download codes** for each release using a prefix for each code. The number of characters can be set for each code.
+*   Create alphanumeric **download codes** for each release using a prefix for each code. The number of characters can be specified for each code.
 *   Review downloads codes and set them to "final" when you want to use and distribute them.
 *   Export final download codes in a plain list.
 *   Analyze the use of the download codes.
 
 == Installation ==
 
-1. Upload the `wp-download-codes` folder to the `/wp-content/plugins/` directory
-1. Activate the plugin through the 'Plugins' menu in WordPress
-1. Create a folder within the `wp-content´ directory and upload one or several zip files via FTP.
-1. Go to the "Settings" page and enter the zip folder specified above.
+1. Upload the `wp-download-codes` folder to the `/wp-content/plugins/` directory.
+1. Activate the plugin through the 'Plugins' menu in WordPress.
+1. Create a folder within the `wp-content` directory and upload one or several zip files via FTP.
+1. Go to the 'Settings' page and enter the zip folder specified above.
 1. Create a new release and assign a valid zip file to it.
-1. Create download codes via "Manage codes".
-1. Put `[download-codes id="xyz"]´ in a page or post, where "xyz" is the ID of the release.
+1. Create download codes for the release via 'Manage codes' and make them final.
+1. Put `[download-codes id="xyz"]` in a page or post, where "xyz" is the ID of the respective release.
 
 == Frequently Asked Questions ==
 
@@ -44,6 +45,10 @@ Most providers do not allow an upload quota which is sufficient to upload larger
 
 
 == Changelog ==
+
+= 1.0.1 =
+* Improved editing and addition of releases.
+* Corrected setting of options during initialization.
 
 = 1.0.0 =
 * Initial version.
