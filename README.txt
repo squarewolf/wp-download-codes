@@ -46,6 +46,10 @@ Most providers do not allow an upload quota which is sufficient to upload larger
 
 == Changelog ==
 
+= 1.0.3 =
+* Added "mp3" to the allowed file types.
+* Reworked constraints for fields on 'Manage Releases'. 
+
 = 1.0.2 =
 * Bug fix: (Existing) zip folders below the upload directory can now be selected via drop-down.
 * Bug fix: On the 'Manage Codes' page, the non-existence of releases was handled (link to 'Add new release' sub page was displayed').

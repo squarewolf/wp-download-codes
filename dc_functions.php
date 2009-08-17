@@ -57,6 +57,13 @@ function dc_zip_location( $str_mode = 'full' ) {
 }
 
 /**
+ * Returns a list of allowed file types.
+ */
+function dc_file_types() {
+   return array( 'zip', 'mp3' );
+}
+
+/**
  * Get message for entering download code
  */
 function dc_msg_code_enter() {

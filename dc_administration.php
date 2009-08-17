@@ -165,23 +165,30 @@ function dc_admin_releases() {
 
 	// Update or insert release
 	if ( isset($_POST['submit']) ) {
+		$post_action = $_POST['action'];
 		$post_title = trim($_POST['title']);
 		$post_filename = $_POST['filename'];
 		$post_release = $_POST['release'];
-		$get_release = $post_release;
 		$post_downloads = $_POST['downloads'];
 		
-		// Update or insert entry if title is not empty
-		if ( '' != $post_title) {
-				
-			if ( $post_release == '') {
+		// Check if all fields have been filled out properly
+		if ( '' == $post_title ) {
+			$message = "The title must not be empty.<br />";	
+		}
+		if ( '' == $post_filename ) {
+			$message .= "Please choose a valid file for this release.<br />";	
+		}
+		if ( !is_numeric( $post_downloads ) ) {
+			$message .= '"Allowed downloads" must be a number.';
+		}
+		
+		// Update or insert if no errors occurred.
+		if ( '' == $message ) {			
+			if ( $post_action == 'new') {
 				$wpdb->insert(	dc_tbl_releases(), 
 							array( 'title' => $post_title, 'filename' => $post_filename, 'allowed_downloads' => $post_downloads),
 							array( '%s', '%s', '%d') );
-					
-				// Get ID of new release
-				$get_release = $wpdb->insert_id;
-					
+												
 				$message = "The release was added successfully.";
 			}
 			else {
@@ -191,10 +198,10 @@ function dc_admin_releases() {
 							array( '%s', '%s', '%d') );
 				$message = "The release was updated sucessfully.";
 			}
-				
 		}
 		else {
-			$message = "The title must not be empty.";		
+			$get_action = $post_action;
+			$get_release = $post_release;
 		}
 			
 		// Print message
@@ -217,7 +224,8 @@ function dc_admin_releases() {
 
 		echo '<form method="post" action="admin.php?page=dc-manage-releases">';
 		echo '<input type="hidden" name="release" value="' . $release->ID . '" />';
-
+		echo '<input type="hidden" name="action" value="' . $get_action . '" />';
+		
 		echo '<table class="form-table">';
 		
 		echo '<tr valign="top">';
@@ -232,7 +240,7 @@ function dc_admin_releases() {
 		echo '<th scope="row">File</th>';
 		echo '<td>' . dc_zip_location( 'short' ) . ' <select name="filename">';
 		foreach ($files as $filename) {
-			if ( strtolower( substr($filename,-4) == ".zip" ) ) {
+			if ( in_array(strtolower( substr($filename,-3) ), dc_file_types() ) ) {
 				echo '<option' . ( $filename == $release->filename ? ' selected="selected"' : '' ) . '>' . $filename . '</option>';
 			}
 		}
