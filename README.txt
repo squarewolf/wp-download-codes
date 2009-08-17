@@ -29,7 +29,7 @@ With the plugin you can:
 1. Go to the 'Settings' page and enter the zip folder specified above.
 1. Create a new release and assign a valid zip file to it.
 1. Create download codes for the release via 'Manage codes' and make them final.
-1. Put `[download-codes id="xyz"]` in a page or post, where "xyz" is the ID of the respective release.
+1. Put `[download-code id="xyz"]` in a page or post, where "xyz" is the ID of the respective release.
 
 == Frequently Asked Questions ==
 
