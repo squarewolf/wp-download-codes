@@ -83,7 +83,6 @@ function dc_admin_menu() {
 	
 	// Help
 	add_submenu_page( __FILE__, 'Download Codes Help', 'Help', 8, 'dc-help', 'dc_admin_help');
-
 }
 
 /**
@@ -103,6 +102,7 @@ function dc_admin_settings() {
 			if ( substr( $dc_zip_location, -1 ) != '/') {
 				$dc_zip_location .= '/';
 			}
+
 			update_option( 'dc_zip_location', $dc_zip_location );
 		}
 		
@@ -113,17 +113,27 @@ function dc_admin_settings() {
 		
 		// Print message
 		echo '<div id="message" class="updated fade">';
-		echo __( 'Your changes were saved.' );
+		echo __( 'Options saved.' );
 		echo '</div>';
 	}
 	
 	echo '<form method="post" action="">';
 
 	echo '<table class="form-table">';
-	
+
+	// Get subfolders of upload directory
+	$wp_upload_dir = wp_upload_dir();
+	$files = scandir( $wp_upload_dir['basedir'] );
+		
 	echo '<tr valign="top">';
-	echo '<th scope="row">Zip Location</th>';
-	echo '<td>/' . get_option( 'upload_path' ) . '/ <input type="text" name="dc_zip_location" size="30" value="' . get_option( 'dc_zip_location' ) . '" />';
+	echo '<th scope="row">File</th>';
+	echo '<td>/' . get_option( 'upload_path' ) . '/ <select name="dc_zip_location" id="dc_zip_location">';
+	foreach ($files as $folder) {
+		if ( is_dir( $wp_upload_dir['basedir'] . '/' . $folder ) && $folder != '.' && $folder != '..' ) {
+			echo '<option' . ( $folder . '/' == get_option( 'dc_zip_location' ) ? ' selected="selected"' : '' ) . '>' . $folder . '</option>';
+		}
+	}
+	echo '</select></td>';
 	echo '</tr>';
 	
 	echo '<tr valign="top">';
@@ -152,51 +162,52 @@ function dc_admin_releases() {
 
 	echo '<div class="wrap">';
 	echo '<h2>Download Codes &raquo; Manage Releases</h2>';
-	
+
+	// Update or insert release
+	if ( isset($_POST['submit']) ) {
+		$post_title = trim($_POST['title']);
+		$post_filename = $_POST['filename'];
+		$post_release = $_POST['release'];
+		$get_release = $post_release;
+		$post_downloads = $_POST['downloads'];
+		
+		// Update or insert entry if title is not empty
+		if ( '' != $post_title) {
+				
+			if ( $post_release == '') {
+				$wpdb->insert(	dc_tbl_releases(), 
+							array( 'title' => $post_title, 'filename' => $post_filename, 'allowed_downloads' => $post_downloads),
+							array( '%s', '%s', '%d') );
+					
+				// Get ID of new release
+				$get_release = $wpdb->insert_id;
+					
+				$message = "The release was added successfully.";
+			}
+			else {
+				$wpdb->update(	dc_tbl_releases(), 
+							array( 'title' => $post_title, 'filename' => $post_filename, 'allowed_downloads' => $post_downloads),
+							array( 'ID' => $post_release ),
+							array( '%s', '%s', '%d') );
+				$message = "The release was updated sucessfully.";
+			}
+				
+		}
+		else {
+			$message = "The title must not be empty.";		
+		}
+			
+		// Print message
+		echo '<div id="message" class="updated fade">';
+		echo __( $message );
+		echo '</div>';
+	}
+
 	if ( $get_action == 'edit' || $get_action == 'new' ) {
 	
 		//*********************************************
 		// Add/Edit release
 		//*********************************************
-
-		if ( isset($_POST['submit']) ) {
-			$post_title = trim($_POST['title']);
-			$post_filename = $_POST['filename'];
-			$post_release = $_POST['release'];
-			$get_release = $post_release;
-			$post_downloads = $_POST['downloads'];
-			
-			// Update or insert entry if title is not empty
-			if ( '' != $post_title) {
-				
-				if ( $post_release == '') {
-					$wpdb->insert(	dc_tbl_releases(), 
-									array( 'title' => $post_title, 'filename' => $post_filename, 'allowed_downloads' => $post_downloads),
-									array( '%s', '%s', '%d') );
-					
-					// Get ID of new release
-					$get_release = $wpdb->insert_id;
-					
-					$message = "The release was added successfully.";
-				}
-				else {
-					$wpdb->update(	dc_tbl_releases(), 
-									array( 'title' => $post_title, 'filename' => $post_filename, 'allowed_downloads' => $post_downloads),
-									array( 'ID' => $post_release ),
-									array( '%s', '%s', '%d') );
-					$message = "The release was updated sucessfully.";
-				}
-				
-			}
-			else {
-				$message = "The title must not be empty.";		
-			}
-			
-			// Print message
-			echo '<div id="message" class="updated fade">';
-			echo __( $message );
-			echo '</div>';
-		}
 		
 		// Get current release
 		$release = $wpdb->get_row( "SELECT * FROM " . dc_tbl_releases() . " WHERE ID = $get_release ");
@@ -204,7 +215,7 @@ function dc_admin_releases() {
 		// Write page subtitle
 		echo '<h3>' . ( ( 'new' == $get_action ) ? 'Add New' : 'Edit' ) . ' Release</h3>';
 
-		echo '<form method="post" action="">';
+		echo '<form method="post" action="admin.php?page=dc-manage-releases">';
 		echo '<input type="hidden" name="release" value="' . $release->ID . '" />';
 
 		echo '<table class="form-table">';
@@ -221,7 +232,7 @@ function dc_admin_releases() {
 		echo '<th scope="row">File</th>';
 		echo '<td>' . dc_zip_location( 'short' ) . ' <select name="filename">';
 		foreach ($files as $filename) {
-			if (substr($filename,-4) == ".zip") {
+			if ( strtolower( substr($filename,-4) == ".zip" ) ) {
 				echo '<option' . ( $filename == $release->filename ? ' selected="selected"' : '' ) . '>' . $filename . '</option>';
 			}
 		}
@@ -313,6 +324,13 @@ function dc_admin_codes() {
 	
 	// List of releases
 	$releases = $wpdb->get_results( "SELECT ID, title FROM " . dc_tbl_releases() . " ORDER BY title" );
+
+	// Display message if no release exists yet
+	if ( sizeof( $releases ) == 0) {
+		echo '<div id="message" class="updated fade">No release has been created yet.</div>';
+		echo '<p>You may want to <a href="admin.php?page=dc-manage-releases&action=new">add a new release</a> first.</p>';
+	}
+	else {
 	echo '<form action="admin.php?page=dc-manage-codes" method="post">';
 	echo '<select name="release" id="release" onchange="submit()">';
 	foreach ( $releases as $r ) {
@@ -447,6 +465,7 @@ function dc_admin_codes() {
 		echo '</div>';
 
 		
+	}
 	}
 	
 	echo '</div>';
