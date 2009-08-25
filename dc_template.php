@@ -110,7 +110,7 @@ function dc_headers() {
 	
 		// Send headers for download
 		header("Content-Type: application/octet-stream");
-		header("Content-Disposition: attachment; filename=\"".$release->filename."\"");
+		header("Content-Disposition: attachment; filename=\"" . $release->filename . "\"");
 
 		// Stream file
 		readfile(dc_zip_location() . $release->filename);

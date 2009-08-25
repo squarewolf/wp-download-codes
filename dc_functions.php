@@ -52,8 +52,19 @@ function dc_max_attempts() {
 function dc_zip_location( $str_mode = 'full' ) {
 	
 	$wp_upload_dir = wp_upload_dir();
+	$upload_path = get_option( 'upload_path' );
 	
-	return ( 'full' == $str_mode ? $wp_upload_dir['basedir'] : '/' . get_option( 'upload_path' ) ) . '/' . get_option( 'dc_zip_location' );
+	if ( 'full' == $str_mode ) {
+		if ( substr( $wp_upload_dir['basedir'], 0, strlen( $upload_path ) ) == $upload_path ) {
+			return  $upload_path . '/' . get_option( 'dc_zip_location' );
+		}
+		else {
+			return $wp_upload_dir['basedir'] . $upload_path . '/' . get_option( 'dc_zip_location' );
+		}
+	}
+	else {
+		return ( !substr( $upload_path, 0, 1) == "/" ? "/" : "") . $upload_path . '/' . get_option( 'dc_zip_location' );
+	}	
 }
 
 /**

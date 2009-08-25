@@ -43,7 +43,7 @@ function dc_init() {
 	$sql = "CREATE TABLE `" . dc_tbl_releases() . "` (
 				   `ID` int(11) NOT NULL auto_increment,
 				   `title` varchar(100) NOT NULL,
-				   `filename` varchar(50) NOT NULL,
+				   `filename` varchar(100) NOT NULL,
 				   `allowed_downloads` int(11) NOT NULL,
 				   PRIMARY KEY  (`ID`)
 				 );";
@@ -127,7 +127,7 @@ function dc_admin_settings() {
 		
 	echo '<tr valign="top">';
 	echo '<th scope="row">File</th>';
-	echo '<td>/' . get_option( 'upload_path' ) . '/ <select name="dc_zip_location" id="dc_zip_location">';
+	echo '<td>' . get_option( 'upload_path' ) . '/ <select name="dc_zip_location" id="dc_zip_location">';
 	foreach ($files as $folder) {
 		if ( is_dir( $wp_upload_dir['basedir'] . '/' . $folder ) && $folder != '.' && $folder != '..' ) {
 			echo '<option' . ( $folder . '/' == get_option( 'dc_zip_location' ) ? ' selected="selected"' : '' ) . '>' . $folder . '</option>';
@@ -313,12 +313,13 @@ function dc_admin_codes() {
 	if ( $get_action == 'make-final' ) {
 	
 		// Make code with certain prefix final
-		$wpdb->update( dc_tbl_codes(), 
+		$wpdb->show_errors();
+		/*$wpdb->update( dc_tbl_codes(), 
 						array( 'final' => 1 ),
-						array( 'release' => $get_release, 'code_prefix' => $_GET['prefix'] ),
+						array( 'release' => (int) $get_release, 'code_prefix' => $_GET['prefix'] ),
 						array( '%d' ),
-						array( '%d', '%s' ) );
-				
+						array( '%d', '%s' ) );*/
+		$wpdb->query( "UPDATE " . dc_tbl_codes() . " SET `final` = 1 WHERE `release` = " . $get_release . " AND code_prefix = '". $_GET['prefix'] . "'" );
 	}
 	elseif ( $get_action == 'delete' ) {
 	
