@@ -107,15 +107,9 @@ function dc_headers() {
 		
 		// Get current IP
 		$IP = $_SERVER['REMOTE_ADDR'];
-	
-		// Send headers for download
-		header("Content-Type: application/octet-stream");
-		header("Content-Disposition: attachment; filename=\"" . $release->filename . "\"");
-
-		// Stream file
-		readfile(dc_zip_location() . $release->filename);
 		
 		// Insert download
+		$wpdb->show_errors();
 		$wpdb->insert(	dc_tbl_downloads(),
 						array( 'code' => $_SESSION['dc_code'], 'IP' => $IP),
 						array( '%d', '%s') );
@@ -123,6 +117,17 @@ function dc_headers() {
 		// Delete session variable and destroy session
 		unset( $_SESSION['dc_code'] );
 		session_destroy();
+	
+		// Send headers for download
+		header("Cache-Control: post-check=0, pre-check=0");
+		header("Expires: 0");
+		header("Content-Description: File Transfer");
+		header("Content-Type: application/octet-stream");
+		header("Content-Disposition: attachment; filename=\"" . $release->filename . "\"");
+		header("Content-Length: ".filesize( dc_zip_location() . $release->filename ));
+		
+		// Stream file
+		readfile(dc_zip_location() . $release->filename);		
 	}
 }
 
