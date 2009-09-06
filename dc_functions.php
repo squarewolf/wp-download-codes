@@ -59,7 +59,7 @@ function dc_zip_location( $str_mode = 'full' ) {
 			return  $upload_path . '/' . get_option( 'dc_zip_location' );
 		}
 		else {
-			return $wp_upload_dir['basedir'] . $upload_path . '/' . get_option( 'dc_zip_location' );
+			return $wp_upload_dir['basedir'] . '/' . get_option( 'dc_zip_location' );
 		}
 	}
 	else {
