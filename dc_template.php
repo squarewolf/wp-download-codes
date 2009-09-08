@@ -126,7 +126,7 @@ function dc_headers() {
 		$_SESSION['dc_location'] = dc_zip_location() . $release->filename;
 		
 		// Redirect to download page
-		wp_redirect( '/wp-content/plugins/wp-download-codes/dc_download.php' );
+		wp_redirect( get_bloginfo( 'url' ) . '/wp-content/plugins/wp-download-codes/dc_download.php' );
 		
 	}
 }
