@@ -75,38 +75,33 @@ function dc_file_types() {
 }
 
 /**
- * Get message for entering download code
+ * Get a message  
  */
-function dc_msg_code_enter() {
-	return "Enter download code: ";
-}
-
-/**
- * Get message for valid download code
- */
-function dc_msg_code_valid() {
-	return "Thank you for entering a valid download code! Please proceed with the download by clicking the following link:";
-}
-
-/**
- * Get message for invalid download code
- */
-function dc_msg_code_invalid() {
-	return "You have entered an invalid download code, please try again.";
-}
-
-/**
- * Get message for reaching maximum number of downloads
- */
-function dc_msg_max_downloads_reached() {
-	return "You have reached the maximum number of allowed downloads for this code. Please refer to the administrator for information about reactivating your code.";
-}
-
-/**
- * Get message for reaching maximum number of downloads
- */
-function dc_msg_max_attempts_reached() {
-	return "You have had too many unsuccessful download attempts today. Please wait and try again.";
+function dc_msg( $str_msg ) {
+	// Try to get option for desired message
+	$str_return = get_option( 'dc_msg_' . $str_msg );
+	
+	if ( '' == $str_return ) {
+		// Default messages
+		switch ( $str_msg ) {
+			case 'code_enter': 
+				$str_return = 'Enter download code:';
+				break;
+			case 'code_valid': 
+				$str_return = 'Thank you for entering a valid download code! Please proceed with the download by clicking the following link:';
+				break;
+			case 'code_invalid': 
+				$str_return = 'You have entered an invalid download code, please try again.';
+				break;
+			case 'max_downloads_reached': 
+				$str_return = 'You have reached the maximum number of allowed downloads for this code. Please refer to the administrator for information about reactivating your code.';
+				break;
+			case 'max_attempts_reached': 
+				$str_return = 'You have had too many unsuccessful download attempts today. Please wait and try again.';
+				break;
+		}
+	}
+	return $str_return;
 }
 
 /**

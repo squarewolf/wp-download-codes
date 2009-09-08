@@ -57,6 +57,11 @@ function dc_uninstall() {
 	// Delete wordpress options
 	delete_option( 'dc_zip_location' );
 	delete_option( 'dc_max_attempts' );
+	delete_option( 'dc_msg_code_enter' );
+	delete_option( 'dc_msg_code_valid' );
+	delete_option( 'dc_msg_code_invalid' );
+	delete_option( 'dc_msg_max_downloads_reached' );
+	delete_option( 'dc_msg_max_attempts_reached' );
 	
 	// Delete database tables
 	$wpdb->query( "DROP TABLE " . dc_tbl_downloads() );
@@ -93,7 +98,7 @@ function dc_admin_settings() {
 	echo '<h2>Download Codes &raquo; Settings</h2>';
 	
 	// Overwrite existing options
-	if (isset($_POST['submit'])) {
+	if ( isset( $_POST['submit'] ) ) {
 		$dc_zip_location = trim($_POST['dc_zip_location']);
 		$dc_max_attempts = $_POST['dc_max_attempts'];
 		
@@ -110,6 +115,13 @@ function dc_admin_settings() {
 		if ( is_numeric( $dc_max_attempts ) ) {
 			update_option( 'dc_max_attempts' , $dc_max_attempts );
 		}
+		
+		// Update messages
+		update_option( 'dc_msg_code_enter' , $_POST['dc_msg_code_enter'] );
+		update_option( 'dc_msg_code_valid' , $_POST['dc_msg_code_valid'] );
+		update_option( 'dc_msg_code_invalid' , $_POST['dc_msg_code_invalid'] );
+		update_option( 'dc_msg_max_downloads_reached' , $_POST['dc_msg_max_downloads_reached'] );
+		update_option( 'dc_msg_max_attempts_reached' , $_POST['dc_msg_max_attempts_reached'] );
 		
 		// Print message
 		echo '<div id="message" class="updated fade">';
@@ -139,6 +151,31 @@ function dc_admin_settings() {
 	echo '<tr valign="top">';
 	echo '<th scope="row">Maximum invalid download attempts</th>';
 	echo '<td><input type="text" name="dc_max_attempts" size="10" value="' . ( get_option( 'dc_max_attempts' ) == '' ? 3 : get_option( 'dc_max_attempts' ) ) . '" />';
+	echo '</tr>';
+	
+	echo '<tr valign="top">';
+	echo '<th scope="row">Message "Enter code"</th>';
+	echo '<td><input type="text" name="dc_msg_code_enter" size="100" value="' . dc_msg( 'code_enter' ) . '" />';
+	echo '</tr>';
+
+	echo '<tr valign="top">';
+	echo '<th scope="row">Message "Code valid"</th>';
+	echo '<td><input type="text" name="dc_msg_code_valid" size="100" value="' . dc_msg( 'code_valid' ) . '" />';
+	echo '</tr>';
+
+	echo '<tr valign="top">';
+	echo '<th scope="row">Message "Code invalid"</th>';
+	echo '<td><input type="text" name="dc_msg_code_invalid" size="100" value="' . dc_msg( 'code_invalid' ) . '" />';
+	echo '</tr>';
+
+	echo '<tr valign="top">';
+	echo '<th scope="row">Message "Maximum of downloads reached"</th>';
+	echo '<td><input type="text" name="dc_msg_max_downloads_reached" size="100" value="' . dc_msg( 'max_downloads_reached' ) . '" />';
+	echo '</tr>';
+
+	echo '<tr valign="top">';
+	echo '<th scope="row">Message "Maximum of attempts reached"</th>';
+	echo '<td><input type="text" name="dc_msg_max_attempts_reached" size="100" value="' . dc_msg( 'max_attempts_reached' ) . '" />';
 	echo '</tr>';
 	
 	echo '</table>';
@@ -340,143 +377,165 @@ function dc_admin_codes() {
 		echo '<p>You may want to <a href="admin.php?page=dc-manage-releases&action=new">add a new release</a> first.</p>';
 	}
 	else {
-	echo '<form action="admin.php?page=dc-manage-codes" method="post">';
-	echo '<select name="release" id="release" onchange="submit()">';
-	foreach ( $releases as $r ) {
-		echo '<option value="' . $r->ID . '"' . ( $r->ID == $get_release ? ' selected="selected"' : '' ) . '>' . $r->title . '</option>';
-	}
-	echo '</select>';
-	echo '</form>';
-	if ( $get_release == '' ) {
-		$get_release = $releases[0]->ID;
-	}
-		
-	// Get codes for current release
-	$codes = $wpdb->get_results( "SELECT r.ID, r.title, r.filename, c.code_prefix, c.final, COUNT(c.ID) AS codes, MIN(c.code_suffix) as code_example FROM " . dc_tbl_releases() . " r LEFT JOIN " . dc_tbl_codes() . " c ON c.release = r.ID WHERE r.ID = $get_release GROUP BY r.ID, r.filename, r.title, c.code_prefix, c.final ORDER BY c.code_prefix" );
-	
-	if ( sizeof($codes) > 0) {
-	
-		// Get release
-		$release = $codes[0];
-		
-		// Generate new codes
-		$post_prefix = strtoupper(trim( $_POST['prefix'] ));
-		$post_codes = trim( $_POST['codes'] );
-		$post_characters = trim( $_POST['characters'] );
-		if ( isset( $_POST['submit'] ) && $post_prefix != '' && is_numeric( $post_codes ) && is_numeric( $post_characters ) ) {
-			
-			// Creates desired number of random codes
-			for ( $i = 0; $i < $post_codes; $i++ ) {
-			
-				// Create random str
-				$code_unique = false;
-				while ( !$code_unique ) {
-					$suffix = rand_str( $post_characters );
-					
-					// Check if code already exists
-					$code_db = $wpdb->get_row( "SELECT ID FROM " . dc_tbl_codes() . " WHERE code_prefix = `$post_prefix` AND code_suffix = `$suffix` AND `release` = " . $release->ID );
-					$code_unique = ( sizeof( $code_db ) == 0);			
-				}
-				
-				// Insert code
-				$wpdb->insert(	dc_tbl_codes(), 
-								array( 'code_prefix' => $post_prefix, 'code_suffix' => $suffix, 'release' => $release->ID ),
-								array( '%s', '%s', '%d' ) );
-			}
-			
-			// Refresh list of codes
-			$codes = $wpdb->get_results( "SELECT r.ID, r.title, r.filename, c.code_prefix, c.final, COUNT(c.ID) AS codes, MIN(c.code_suffix) as code_example FROM " . dc_tbl_releases() . " r LEFT JOIN " . dc_tbl_codes() . " c ON c.release = r.ID WHERE r.ID = $get_release GROUP BY r.ID, r.filename, r.title, c.code_prefix, c.final ORDER BY c.code_prefix" );
-			$release = $codes[0];
+		echo '<form action="admin.php?page=dc-manage-codes" method="post">';
+		echo '<select name="release" id="release" onchange="submit()">';
+		foreach ( $releases as $r ) {
+			echo '<option value="' . $r->ID . '"' . ( $r->ID == $get_release ? ' selected="selected"' : '' ) . '>' . $r->title . '</option>';
 		}
-	
-		// Subtitle
-		echo '<h3>' . $release->title . ' (' . $release->filename . ')</h3>';
-		
-		echo '<table class="widefat">';
-		
-		echo '<thead>';
-		echo '<tr><th>Prefix</th><th>Final</th><th># Codes</th><th>Example</th><th>Actions</th></tr>';
-		echo '</thead>';
-		
-		// List codes
-		if ($release->code_prefix != '') {
-			echo '<tbody>';
-			foreach ($codes as $code) {
-				echo '<tr><td>' . $code->code_prefix . '</td><td>' . ( $code->final == 1 ? "Yes" : "No" ) . '</td>';
-				echo '<td>' . $code->codes . '</td>';
-				echo '<td>' . $code->code_example . '</td>';
-				echo '<td>';
-				
-				// Link to make codes final/delete codes or to export final codes
-				if ( $code->final == 0 ) {
-					echo '<a href="admin.php?page=dc-manage-codes&amp;release=' . $release->ID . '&amp;prefix=' . $code->code_prefix . '&amp;action=make-final">Make final</a> | ';
-					echo '<a href="admin.php?page=dc-manage-codes&amp;release=' . $release->ID . '&amp;prefix=' . $code->code_prefix . '&amp;action=delete">Delete</a>';
-				}
-				else {
-					echo '<a href="admin.php?page=dc-manage-codes&amp;release=' . $release->ID . '&amp;prefix=' . $code->code_prefix . '&amp;action=export">Export</a> | ';
-					echo '<a href="admin.php?page=dc-manage-codes&amp;release=' . $release->ID . '&amp;prefix=' . $code->code_prefix . '&amp;action=analyze">Analyze</a>';
-				}
-				
-				echo '</td></tr>';
-			}
-			echo '</tbody>';
-		}
-		
-		echo '<tfoot>';
-		echo '<tr><th>Prefix</th><th>Final</th><th># Codes</th><th>Example</th><th>Actions</th></tr>';
-		echo '</tfoot>';
-	
-		echo '</table>';
-	
-		// Show form to add codes
-		echo '<form method="post" action="admin.php?page=dc-manage-codes">';
-		echo '<input type="hidden" name="release" value="' . $release->ID . '" />';
-	
-		echo '<table class="form-table">';
-		
-		echo '<tr valign="top">';
-		echo '<th scope="row"><strong>Generate new codes</strong></th>';
-		echo '<td>Prefix <input type="text" name="prefix" value="' . $post_prefix . '" /></td>';
-		echo '<td># of Codes <input type="text" name="codes" size="4" maxlength="4" value="' . $post_codes .'" /></td>';
-		echo '<td># of random characters <input type="text" name="characters" size="2" maxlength="2" value="' . ( $post_characters != '' ? $post_characters : '8' ) .'" /></td>';
-		echo '<td><input type="submit" name="submit" class="button-secondary" value="Generate" /></td>';
-		echo '</tr>';
-		echo '</table>';
-	
+		echo '</select>';
 		echo '</form>';
-	}
-	
-	// Show codes to be exported or downloas to be analyzed
-	if ( $get_action == 'export' ) {
-	
-		// Export codes
-		echo '<div id="message" class="updated fade">';
-		
-		$codes = $wpdb->get_results( "SELECT r.title, c.code_prefix, c.code_suffix FROM " . dc_tbl_releases() . " r INNER JOIN " . dc_tbl_codes() . " c ON c.release = r.ID WHERE r.ID = $get_release AND c.code_prefix = '". $_GET['prefix'] . "' ORDER BY c.code_prefix, c.code_suffix" );
-		
-		foreach ( $codes as $code ) {
-			echo $code->code_prefix . $code->code_suffix . "<br />";
+		if ( $get_release == '' ) {
+			$get_release = $releases[0]->ID;
 		}
+			
+		// Get codes for current release
+		$codes = $wpdb->get_results( "SELECT r.ID, r.title, r.filename, c.code_prefix, c.final, COUNT(c.ID) AS codes, MIN(c.code_suffix) as code_example FROM " . dc_tbl_releases() . " r LEFT JOIN " . dc_tbl_codes() . " c ON c.release = r.ID WHERE r.ID = $get_release GROUP BY r.ID, r.filename, r.title, c.code_prefix, c.final ORDER BY c.code_prefix" );
 		
-		echo '</div>';
-	}
-	elseif ( $get_action == 'analyze' ) {
-	
-		// List downloads
-		echo '<div id="message" class="updated fade">';
+		if ( sizeof($codes) > 0) {
 		
-		$downloads = $wpdb->get_results( "SELECT r.title, c.code_prefix, c.code_suffix, DATE_FORMAT(d.started_at, '%d.%m.%Y %H:%i') AS download_time FROM (" . dc_tbl_releases() . " r INNER JOIN " . dc_tbl_codes() . " c ON c.release = r.ID) INNER JOIN " . dc_tbl_downloads() . " d ON d.code = c.ID WHERE r.ID = $get_release AND c.code_prefix = '". $_GET['prefix'] . "' ORDER BY c.code_prefix, c.code_suffix " );
+			// Get release
+			$release = $codes[0];
+			
+			// Generate new codes
+			$post_prefix = strtoupper(trim( $_POST['prefix'] ));
+			$post_codes = trim( $_POST['codes'] );
+			$post_characters = trim( $_POST['characters'] );
+			$post_code_reset = $_POST['code_reset'];
+			if ( isset( $_POST['submit'] ) && $post_prefix != '' && is_numeric( $post_codes ) && is_numeric( $post_characters ) ) {
+				
+				// Creates desired number of random codes
+				for ( $i = 0; $i < $post_codes; $i++ ) {
+				
+					// Create random str
+					$code_unique = false;
+					while ( !$code_unique ) {
+						$suffix = rand_str( $post_characters );
+						
+						// Check if code already exists
+						$code_db = $wpdb->get_row( "SELECT ID FROM " . dc_tbl_codes() . " WHERE code_prefix = `$post_prefix` AND code_suffix = `$suffix` AND `release` = " . $release->ID );
+						$code_unique = ( sizeof( $code_db ) == 0);			
+					}
+					
+					// Insert code
+					$wpdb->insert(	dc_tbl_codes(), 
+									array( 'code_prefix' => $post_prefix, 'code_suffix' => $suffix, 'release' => $release->ID ),
+									array( '%s', '%s', '%d' ) );
+				}
+				
+				// Refresh list of codes
+				$codes = $wpdb->get_results( "SELECT r.ID, r.title, r.filename, c.code_prefix, c.final, COUNT(c.ID) AS codes, MIN(c.code_suffix) as code_example FROM " . dc_tbl_releases() . " r LEFT JOIN " . dc_tbl_codes() . " c ON c.release = r.ID WHERE r.ID = $get_release GROUP BY r.ID, r.filename, r.title, c.code_prefix, c.final ORDER BY c.code_prefix" );
+				$release = $codes[0];
+			}
 		
-		foreach ( $downloads as $download ) {
-			echo $download->code_prefix . $download->code_suffix . ' [' . $download->download_time . ']<br />';
-		}
-		
-		echo '</div>';
+			// Reset code(s)
+			if ( isset( $_POST['submit'] ) && $post_code_reset != '' ) {
+				
+				// Delete downloads
+				$wpdb->query( "DELETE FROM " . dc_tbl_downloads() . " WHERE `code` = (SELECT ID FROM " . dc_tbl_codes() . " WHERE `release` = $get_release " . ( $post_code_reset != 'All' ? " AND CONCAT(code_prefix, code_suffix) ='" . $post_code_reset . "'" : "" ) . ")" );
 
+			}
 		
-	}
-	}
+			// Subtitle
+			echo '<h3>' . $release->title . ' (' . $release->filename . ')</h3>';
+			
+			echo '<table class="widefat">';
+			
+			echo '<thead>';
+			echo '<tr><th>Prefix</th><th>Final</th><th># Codes</th><th>Example</th><th>Actions</th></tr>';
+			echo '</thead>';
+			
+			// List codes
+			if ($release->code_prefix != '') {
+				echo '<tbody>';
+				foreach ($codes as $code) {
+					echo '<tr><td>' . $code->code_prefix . '</td><td>' . ( $code->final == 1 ? "Yes" : "No" ) . '</td>';
+					echo '<td>' . $code->codes . '</td>';
+					echo '<td>' . $code->code_example . '</td>';
+					echo '<td>';
+					
+					// Link to make codes final/delete codes or to export final codes
+					if ( $code->final == 0 ) {
+						echo '<a href="admin.php?page=dc-manage-codes&amp;release=' . $release->ID . '&amp;prefix=' . $code->code_prefix . '&amp;action=make-final">Make final</a> | ';
+						echo '<a href="admin.php?page=dc-manage-codes&amp;release=' . $release->ID . '&amp;prefix=' . $code->code_prefix . '&amp;action=delete">Delete</a>';
+					}
+					else {
+						echo '<a href="admin.php?page=dc-manage-codes&amp;release=' . $release->ID . '&amp;prefix=' . $code->code_prefix . '&amp;action=export">Export</a> | ';
+						echo '<a href="admin.php?page=dc-manage-codes&amp;release=' . $release->ID . '&amp;prefix=' . $code->code_prefix . '&amp;action=analyze">Analyze</a>';
+					}
+					
+					echo '</td></tr>';
+				}
+				echo '</tbody>';
+			}
+			
+			echo '<tfoot>';
+			echo '<tr><th>Prefix</th><th>Final</th><th># Codes</th><th>Example</th><th>Actions</th></tr>';
+			echo '</tfoot>';
+		
+			echo '</table>';
+		
+			// Show form to add codes
+			echo '<form method="post" action="admin.php?page=dc-manage-codes">';
+			echo '<input type="hidden" name="release" value="' . $release->ID . '" />';
+			echo '<table class="form-table">';
+			echo '<tr valign="top">';
+			echo '<th scope="row"><strong>Generate new codes</strong></th>';
+			echo '<td>Prefix <input type="text" name="prefix" value="' . $post_prefix . '" /></td>';
+			echo '<td># of Codes <input type="text" name="codes" size="4" maxlength="4" value="' . $post_codes .'" /></td>';
+			echo '<td># of random characters <input type="text" name="characters" size="2" maxlength="2" value="' . ( $post_characters != '' ? $post_characters : '8' ) .'" /></td>';
+			echo '<td><input type="submit" name="submit" class="button-secondary" value="Generate" /></td>';
+			echo '</tr>';
+			echo '</table>';
+			echo '</form>';
+			
+			// Show form to reset codes
+			echo '<form method="post" action="admin.php?page=dc-manage-codes">';
+			echo '<input type="hidden" name="release" value="' . $release->ID . '" />';
+			echo '<table class="form-table">';
+			echo '<tr valign="top">';
+			echo '<th scope="row"><strong>Reset downloads</strong></th>';
+			echo '<td>Code ';
+			echo '<select name="code_reset"><option value="">--- Select code ---</option><option>All</option>';
+			$codes = $wpdb->get_results( "SELECT r.title, c.code_prefix, c.code_suffix FROM " . dc_tbl_releases() . " r INNER JOIN " . dc_tbl_codes() . " c ON c.release = r.ID WHERE r.ID = $get_release ORDER BY c.code_prefix, c.code_suffix" );
+			foreach ( $codes as $code ) {
+				echo '<option>' . $code->code_prefix . $code->code_suffix . '</option>';
+			}
+			echo '</select> <input type="submit" name="submit" class="button-secondary" value="Reset" /></td>';
+			echo '</tr>';
+			echo '</table>';
+			echo '</form>';
+		}
+		
+		// Show codes to be exported or downloas to be analyzed
+		if ( $get_action == 'export' ) {
+		
+			// Export codes
+			echo '<div id="message" class="updated fade">';
+			
+			$codes = $wpdb->get_results( "SELECT r.title, c.code_prefix, c.code_suffix FROM " . dc_tbl_releases() . " r INNER JOIN " . dc_tbl_codes() . " c ON c.release = r.ID WHERE r.ID = $get_release AND c.code_prefix = '". $_GET['prefix'] . "' ORDER BY c.code_prefix, c.code_suffix" );
+			
+			foreach ( $codes as $code ) {
+				echo $code->code_prefix . $code->code_suffix . "<br />";
+			}
+			
+			echo '</div>';
+		}
+		elseif ( $get_action == 'analyze' ) {
+		
+			// List downloads
+			echo '<div id="message" class="updated fade">';
+			
+			$downloads = $wpdb->get_results( "SELECT r.title, c.code_prefix, c.code_suffix, DATE_FORMAT(d.started_at, '%d.%m.%Y %H:%i') AS download_time FROM (" . dc_tbl_releases() . " r INNER JOIN " . dc_tbl_codes() . " c ON c.release = r.ID) INNER JOIN " . dc_tbl_downloads() . " d ON d.code = c.ID WHERE r.ID = $get_release AND c.code_prefix = '". $_GET['prefix'] . "' ORDER BY c.code_prefix, c.code_suffix " );
+			
+			foreach ( $downloads as $download ) {
+				echo $download->code_prefix . $download->code_suffix . ' [' . $download->download_time . ']<br />';
+			}
+			
+			echo '</div>';
 	
+			
+		}
+	}	
 	echo '</div>';
 }
 

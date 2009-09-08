@@ -22,9 +22,6 @@ function dc_download_form( $atts ) {
 	), $atts));
 	
 	if (isset( $_POST['submit'] )) {
-		// Get release details
-		$release = $wpdb->get_row( "SELECT * FROM " . dc_tbl_releases() . " WHERE ID = " . $id);
-		
 		// Get current IP
 		$IP = $_SERVER['REMOTE_ADDR'];
 				
@@ -32,11 +29,21 @@ function dc_download_form( $atts ) {
 		$post_code = strtoupper(trim($_POST['code']));
 	
 		// Check if code is valid
-		$code = $wpdb->get_row( "SELECT ID FROM " . dc_tbl_codes() . " WHERE CONCAT(code_prefix, code_suffix) = '" . $post_code . "'");
+		$wpdb->show_errors();
+		$code = $wpdb->get_row( "SELECT ID, `release` FROM " . dc_tbl_codes() . " WHERE CONCAT(code_prefix, code_suffix) = '" . $post_code . "'");
 		
 		if ( $code->ID ) {
+			// Get release details
+			if ( $id != 0 ) {
+				// Get release by ID
+				$release = $wpdb->get_row( "SELECT * FROM " . dc_tbl_releases() . " WHERE ID = " . $id);	
+			}
+			else {
+				// Get release by code
+				$release = $wpdb->get_row( "SELECT * FROM " . dc_tbl_releases() . " WHERE ID = " . $code->release);	
+			}
+			
 			// Get # of downloads with this code
-			$wpdb->show_errors();
 			$downloads = $wpdb->get_row( "SELECT COUNT(*) AS downloads FROM " . dc_tbl_downloads() . " WHERE code=(SELECT ID FROM " . dc_tbl_codes() . " WHERE CONCAT(code_prefix, code_suffix) ='" . $post_code . "')");
 			
 			// Start download if maximum of allowed downloads is not reached
@@ -45,7 +52,7 @@ function dc_download_form( $atts ) {
 				$_SESSION['dc_code'] = $code->ID;
 			}
 			else {
-				$ret = dc_msg_max_downloads_reached();
+				$ret = dc_msg( 'max_downloads_reached' );
 			}
 		}
 		else {
@@ -58,10 +65,10 @@ function dc_download_form( $atts ) {
 								array( 'code' => -1, 'IP' => $IP),
 								array( '%d', '%s') );
 
-				$ret = dc_msg_code_invalid();
+				$ret = dc_msg( 'code_invalid' );
 			}
 			else {
-				$ret = dc_msg_max_attempts_reached();
+				$ret = dc_msg( 'max_attempts_reached' );
 			}	
 		}
 	}
@@ -76,13 +83,13 @@ function dc_download_form( $atts ) {
 		// Display form
 		$html .= '<form action="" name="dc_form" method="post">';
 		$html .= '<p><input type="hidden" name="release" value="' . $id . '" />'; 
-		$html .= dc_msg_code_enter() .' <input type="text" name="code" value="' . $post_code . '" size="20" /> ';
+		$html .= dc_msg( 'code_enter' ) .' <input type="text" name="code" value="' . $post_code . '" size="20" /> ';
 		$html .= '<input type="submit" name="submit" value="' . __( 'Submit') . '" /></p>';
 		$html .= '</form>';
 	}
 	else {
 		// Show link for download
-		$html .= '<p>' . dc_msg_code_valid() . '</p>';
+		$html .= '<p>' . dc_msg( 'code_valid' ) . '</p>';
 		$html .= '<p><a href="">' . $release->filename . '</a></p>'; 
 	}
 	$html .= '</div>';
@@ -91,7 +98,7 @@ function dc_download_form( $atts ) {
 }
 
 /**
- * Sends headers to download file when download code was entered successfully.
+ * Sends headers to redirect to dc_download.php when download code was entered successfully.
  */
 function dc_headers() {
 	global $wpdb;
@@ -102,32 +109,25 @@ function dc_headers() {
 	}
 	
 	if (isset( $_SESSION['dc_code'] )) {
+	
 		// Get details for code and release
 		$release = $wpdb->get_row( "SELECT r.*, c.code_suffix FROM " . dc_tbl_releases() . " r INNER JOIN " . dc_tbl_codes() ." c ON c.release = r.ID WHERE c.ID = " . $_SESSION['dc_code']);
 		
 		// Get current IP
 		$IP = $_SERVER['REMOTE_ADDR'];
 		
-		// Insert download
-		$wpdb->show_errors();
+		// Insert download in downloads table
 		$wpdb->insert(	dc_tbl_downloads(),
 						array( 'code' => $_SESSION['dc_code'], 'IP' => $IP),
 						array( '%d', '%s') );
+
+		// Store details in session variables
+		$_SESSION['dc_filename'] = $release->filename;
+		$_SESSION['dc_location'] = dc_zip_location() . $release->filename;
 		
-		// Delete session variable and destroy session
-		unset( $_SESSION['dc_code'] );
-		session_destroy();
-	
-		// Send headers for download
-		header("Cache-Control: post-check=0, pre-check=0");
-		header("Expires: 0");
-		header("Content-Description: File Transfer");
-		header("Content-Type: application/octet-stream");
-		header("Content-Disposition: attachment; filename=\"" . $release->filename . "\"");
-		header("Content-Length: ".filesize( dc_zip_location() . $release->filename ));
+		// Redirect to download page
+		wp_redirect( '/wp-content/plugins/wp-download-codes/dc_download.php' );
 		
-		// Stream file
-		readfile(dc_zip_location() . $release->filename);		
 	}
 }
 
