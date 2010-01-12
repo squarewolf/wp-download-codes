@@ -62,6 +62,7 @@ function dc_uninstall() {
 	delete_option( 'dc_msg_code_invalid' );
 	delete_option( 'dc_msg_max_downloads_reached' );
 	delete_option( 'dc_msg_max_attempts_reached' );
+	delete_option( 'dc_file_types' );
 	
 	// Delete database tables
 	$wpdb->query( "DROP TABLE " . dc_tbl_downloads() );
@@ -123,6 +124,11 @@ function dc_admin_settings() {
 		update_option( 'dc_msg_max_downloads_reached' , $_POST['dc_msg_max_downloads_reached'] );
 		update_option( 'dc_msg_max_attempts_reached' , $_POST['dc_msg_max_attempts_reached'] );
 		
+		// Update file types
+		if ( '' != trim( $_POST['dc_file_types'] ) ) {
+			update_option( 'dc_file_types' , trim( $_POST['dc_file_types'] ) );
+		}
+		
 		// Print message
 		echo '<div id="message" class="updated fade">';
 		echo __( 'Options saved.' );
@@ -151,6 +157,11 @@ function dc_admin_settings() {
 	echo '<tr valign="top">';
 	echo '<th scope="row">Maximum invalid download attempts</th>';
 	echo '<td><input type="text" name="dc_max_attempts" size="10" value="' . ( get_option( 'dc_max_attempts' ) == '' ? 3 : get_option( 'dc_max_attempts' ) ) . '" />';
+	echo '</tr>';
+	
+	echo '<tr valign="top">';
+	echo '<th scope="row">List of allowed file types (separated by comma)</th>';
+	echo '<td><input type="text" name="dc_file_types" size="100" value="' . ( implode( ',', dc_file_types() ) ) . '" />';
 	echo '</tr>';
 	
 	echo '<tr valign="top">';
@@ -254,7 +265,9 @@ function dc_admin_releases() {
 		//*********************************************
 		
 		// Get current release
-		$release = $wpdb->get_row( "SELECT * FROM " . dc_tbl_releases() . " WHERE ID = $get_release ");
+		if ( '' != $get_release ) {
+			$release = $wpdb->get_row( "SELECT * FROM " . dc_tbl_releases() . " WHERE ID = $get_release ");
+		}
 		
 		// Write page subtitle
 		echo '<h3>' . ( ( 'new' == $get_action ) ? 'Add New' : 'Edit' ) . ' Release</h3>';

@@ -71,7 +71,16 @@ function dc_zip_location( $str_mode = 'full' ) {
  * Returns a list of allowed file types.
  */
 function dc_file_types() {
-   return array( 'zip', 'mp3' );
+	$str_file_types = get_option( 'dc_file_types' );
+	
+	if ( '' == $str_file_types ) {
+		$arr_file_types = array( 'zip', 'mp3' );
+	}
+	else {
+		$arr_file_types = explode( ',', $str_file_types );
+	}
+	
+	return $arr_file_types;
 }
 
 /**
