@@ -62,6 +62,7 @@ function dc_uninstall() {
 	delete_option( 'dc_msg_code_invalid' );
 	delete_option( 'dc_msg_max_downloads_reached' );
 	delete_option( 'dc_msg_max_attempts_reached' );
+	delete_option( 'dc_file_location' );
 	delete_option( 'dc_file_types' );
 	
 	// Delete database tables
@@ -100,16 +101,16 @@ function dc_admin_settings() {
 	
 	// Overwrite existing options
 	if ( isset( $_POST['submit'] ) ) {
-		$dc_zip_location = trim($_POST['dc_zip_location']);
+		$dc_file_location = trim( ( '' != trim($_POST['dc_file_location_abs']) ? $_POST['dc_file_location_abs'] : $_POST['dc_file_location'] ) );
 		$dc_max_attempts = $_POST['dc_max_attempts'];
 		
 		// Update zip location
-		if ( $dc_zip_location != '' ) {
-			if ( substr( $dc_zip_location, -1 ) != '/') {
-				$dc_zip_location .= '/';
+		if ( $dc_file_location != '' ) {
+			if ( substr( $dc_file_location, -1 ) != '/') {
+				$dc_file_location .= '/';
 			}
 
-			update_option( 'dc_zip_location', $dc_zip_location );
+			update_option( 'dc_file_location', $dc_file_location );
 		}
 		
 		// Update number of maximum attempts
@@ -139,19 +140,39 @@ function dc_admin_settings() {
 
 	echo '<table class="form-table">';
 
-	// Get subfolders of upload directory
-	$wp_upload_dir = wp_upload_dir();
-	$files = scandir( $wp_upload_dir['basedir'] );
-		
+	/**
+	 * Location of download files
+	 */
+	
 	echo '<tr valign="top">';
-	echo '<th scope="row">File</th>';
-	echo '<td>' . get_option( 'upload_path' ) . '/ <select name="dc_zip_location" id="dc_zip_location">';
-	foreach ($files as $folder) {
-		if ( is_dir( $wp_upload_dir['basedir'] . '/' . $folder ) && $folder != '.' && $folder != '..' ) {
-			echo '<option' . ( $folder . '/' == get_option( 'dc_zip_location' ) ? ' selected="selected"' : '' ) . '>' . $folder . '</option>';
+	echo '<th scope="row">Location of download files</th>';
+	
+	if ( '' == get_option( 'dc_file_location' ) || ( '' != get_option( 'dc_file_location' ) && '/' != substr( get_option( 'dc_file_location' ), 0, 1 ) ) ) {
+		// If current location of download files is empty or relative, try to locate the upload folder
+		$wp_upload_dir = wp_upload_dir();
+		$files = scandir( $wp_upload_dir['basedir'] );	
+		
+		echo '<td>' . $wp_upload_dir['basedir']  . '/ <select name="dc_file_location" id="dc_file_location">';
+		foreach ($files as $folder) {
+			if ( is_dir( $wp_upload_dir['basedir'] . '/' . $folder ) && $folder != '.' && $folder != '..' ) {
+				echo '<option' . ( $folder . '/' == get_option( 'dc_file_location' ) ? ' selected="selected"' : '' ) . '>' . $folder . '</option>';
+			}
 		}
+		echo '</select>';
+		
+		// Provide possibility to define upload path directly
+		echo '<br /><br />';
+		echo 'If the upload folder cannot be determined or if the release management does not work somehow, or if you want to have another download file location, you can specify the absolute path of the download file location here:<br />';
+		echo '<input type="text" name="dc_file_location_abs" size="100" / >';
+		
+		echo '</td>';
 	}
-	echo '</select></td>';
+	else {
+		echo '<td><input type="text" name="dc_file_location" size="100" value="' . get_option( 'dc_file_location' ) . '" />';
+		echo '<br />Provide the absolute path to your download file location.';
+		echo '</td>';
+	}
+	
 	echo '</tr>';
 	
 	echo '<tr valign="top">';
@@ -280,15 +301,15 @@ function dc_admin_releases() {
 		
 		echo '<tr valign="top">';
 		echo '<th scope="row">Title</th>';
-		echo '<td><input type="text" name="title" value="' . $release->title . '" />';
+		echo '<td><input type="text" name="title" size="100" value="' . $release->title . '" />';
 		echo '</tr>';
 		
 		// Get zip files in download folder
-		$files = scandir( dc_zip_location() );
+		$files = scandir( dc_file_location() );
 		
 		echo '<tr valign="top">';
 		echo '<th scope="row">File</th>';
-		echo '<td>' . dc_zip_location( 'short' ) . ' <select name="filename">';
+		echo '<td>' . dc_file_location( 'short' ) . ' <select name="filename">';
 		foreach ($files as $filename) {
 			if ( in_array(strtolower( substr($filename,-3) ), dc_file_types() ) ) {
 				echo '<option' . ( $filename == $release->filename ? ' selected="selected"' : '' ) . '>' . $filename . '</option>';
@@ -546,7 +567,6 @@ function dc_admin_codes() {
 			
 			echo '</div>';
 	
-			
 		}
 	}	
 	echo '</div>';

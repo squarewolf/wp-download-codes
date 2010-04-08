@@ -47,24 +47,35 @@ function dc_max_attempts() {
 }
 
 /**
- * Returns the full path of the zip location.
+ * Returns the full path of the download file location.
  */
-function dc_zip_location( $str_mode = 'full' ) {
-	
-	$wp_upload_dir = wp_upload_dir();
-	$upload_path = get_option( 'upload_path' );
-	
-	if ( 'full' == $str_mode ) {
-		if ( substr( $wp_upload_dir['basedir'], 0, strlen( $upload_path ) ) == $upload_path ) {
-			return  $upload_path . '/' . get_option( 'dc_zip_location' );
-		}
-		else {
-			return $wp_upload_dir['basedir'] . '/' . get_option( 'dc_zip_location' );
-		}
+function dc_file_location( $str_mode = 'full' ) {
+
+	// Get location of download file
+	$dc_file_location = ( '' == get_option( 'dc_file_location' ) ? get_option( 'dc_zip_location' ) : get_option( 'dc_file_location' ) );
+
+	// Check if location is an absolute or relative path
+	if ( strlen( $dc_file_location ) > 0 && '/' == substr( $dc_file_location, 0, 1) ) {
+		// Absolute locations are returned directly
+		return $dc_file_location;
 	}
 	else {
-		return ( !substr( $upload_path, 0, 1) == "/" ? "/" : "") . $upload_path . '/' . get_option( 'dc_zip_location' );
-	}	
+		// Relative locations are returned with the respective upload path directory
+		$wp_upload_dir = wp_upload_dir();
+		$upload_path = get_option( 'upload_path' );
+		
+		if ( 'full' == $str_mode ) {
+			if ( substr( $wp_upload_dir['basedir'], 0, strlen( $upload_path ) ) == $upload_path ) {
+				return  $upload_path . '/' . $dc_file_location;
+			}
+			else {
+				return $wp_upload_dir['basedir'] . '/' . $dc_file_location;
+			}
+		}
+		else {
+			return ( !substr( $upload_path, 0, 1) == "/" ? "/" : "") . $upload_path . '/' . $dc_file_location;
+		}
+	}
 }
 
 /**

@@ -123,7 +123,7 @@ function dc_headers() {
 
 		// Store details in session variables
 		$_SESSION['dc_filename'] = $release->filename;
-		$_SESSION['dc_location'] = dc_zip_location() . $release->filename;
+		$_SESSION['dc_location'] = dc_file_location() . $release->filename;
 		
 		// Redirect to download page
 		// Redirect to download page
