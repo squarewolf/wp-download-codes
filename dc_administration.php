@@ -168,46 +168,44 @@ function dc_admin_settings() {
 		echo '</td>';
 	}
 	else {
-		echo '<td><input type="text" name="dc_file_location" size="100" value="' . get_option( 'dc_file_location' ) . '" />';
-		echo '<br />Provide the absolute path to your download file location.';
-		echo '</td>';
+		echo '<td><input type="text" name="dc_file_location" size="100" value="' . get_option( 'dc_file_location' ) . '" /></td>';
 	}
 	
 	echo '</tr>';
 	
 	echo '<tr valign="top">';
 	echo '<th scope="row">Maximum invalid download attempts</th>';
-	echo '<td><input type="text" name="dc_max_attempts" size="10" value="' . ( get_option( 'dc_max_attempts' ) == '' ? 3 : get_option( 'dc_max_attempts' ) ) . '" />';
+	echo '<td><input type="text" name="dc_max_attempts" size="10" value="' . ( get_option( 'dc_max_attempts' ) == '' ? 3 : get_option( 'dc_max_attempts' ) ) . '" /></td>';
 	echo '</tr>';
 	
 	echo '<tr valign="top">';
 	echo '<th scope="row">List of allowed file types (separated by comma)</th>';
-	echo '<td><input type="text" name="dc_file_types" size="100" value="' . ( implode( ',', dc_file_types() ) ) . '" />';
+	echo '<td><input type="text" name="dc_file_types" size="100" value="' . ( implode( ',', dc_file_types() ) ) . '" /></td>';
 	echo '</tr>';
 	
 	echo '<tr valign="top">';
 	echo '<th scope="row">Message "Enter code"</th>';
-	echo '<td><input type="text" name="dc_msg_code_enter" size="100" value="' . dc_msg( 'code_enter' ) . '" />';
+	echo '<td><input type="text" name="dc_msg_code_enter" size="100" value="' . dc_msg( 'code_enter' ) . '" /></td>';
 	echo '</tr>';
 
 	echo '<tr valign="top">';
 	echo '<th scope="row">Message "Code valid"</th>';
-	echo '<td><input type="text" name="dc_msg_code_valid" size="100" value="' . dc_msg( 'code_valid' ) . '" />';
+	echo '<td><input type="text" name="dc_msg_code_valid" size="100" value="' . dc_msg( 'code_valid' ) . '" /></td>';
 	echo '</tr>';
 
 	echo '<tr valign="top">';
 	echo '<th scope="row">Message "Code invalid"</th>';
-	echo '<td><input type="text" name="dc_msg_code_invalid" size="100" value="' . dc_msg( 'code_invalid' ) . '" />';
+	echo '<td><input type="text" name="dc_msg_code_invalid" size="100" value="' . dc_msg( 'code_invalid' ) . '" /></td>';
 	echo '</tr>';
 
 	echo '<tr valign="top">';
 	echo '<th scope="row">Message "Maximum of downloads reached"</th>';
-	echo '<td><input type="text" name="dc_msg_max_downloads_reached" size="100" value="' . dc_msg( 'max_downloads_reached' ) . '" />';
+	echo '<td><input type="text" name="dc_msg_max_downloads_reached" size="100" value="' . dc_msg( 'max_downloads_reached' ) . '" /></td>';
 	echo '</tr>';
 
 	echo '<tr valign="top">';
 	echo '<th scope="row">Message "Maximum of attempts reached"</th>';
-	echo '<td><input type="text" name="dc_msg_max_attempts_reached" size="100" value="' . dc_msg( 'max_attempts_reached' ) . '" />';
+	echo '<td><input type="text" name="dc_msg_max_attempts_reached" size="100" value="' . dc_msg( 'max_attempts_reached' ) . '" /></td>';
 	echo '</tr>';
 	
 	echo '</table>';

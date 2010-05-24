@@ -126,9 +126,17 @@ function dc_headers() {
 		$_SESSION['dc_location'] = dc_file_location() . $release->filename;
 		
 		// Redirect to download page
-		// Redirect to download page
-		wp_redirect( 'http://'.$_SERVER['HTTP_HOST'].'/wp-content/plugins/wp-download-codes/dc_download.php' );
-		exit;		
+		$wp_subfolder = str_replace( 'http://', '', get_bloginfo( 'wpurl' ) );
+		$wp_subfolder = str_replace( 'https://', '', $wp_subfolder );
+		$arr_folders = explode( '/', $wp_subfolder );
+		if ( sizeof( $arr_folders ) == 1) {
+			$wp_subfolder = '';
+		}
+		else {
+			$wp_subfolder = $arr_folders[1] . '/';
+		}
+		wp_redirect( 'http://' . $_SERVER['HTTP_HOST'] . '/' . $wp_subfolder . 'wp-content/plugins/wp-download-codes/dc_download.php' );
+		exit;
 	}
 }
 
