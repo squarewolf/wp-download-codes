@@ -49,9 +49,9 @@ function dc_max_attempts() {
 /**
  * Returns the full path of the download file location.
  */
-function dc_file_location( $str_mode = 'full' ) {
+function dc_file_location() {
 
-	// Get location of download file
+	// Get location of download file (for compatibility of older versions)
 	$dc_file_location = ( '' == get_option( 'dc_file_location' ) ? get_option( 'dc_zip_location' ) : get_option( 'dc_file_location' ) );
 
 	// Check if location is an absolute or relative path
@@ -64,16 +64,11 @@ function dc_file_location( $str_mode = 'full' ) {
 		$wp_upload_dir = wp_upload_dir();
 		$upload_path = get_option( 'upload_path' );
 		
-		if ( 'full' == $str_mode ) {
-			if ( substr( $wp_upload_dir['basedir'], 0, strlen( $upload_path ) ) == $upload_path ) {
-				return  $upload_path . '/' . $dc_file_location;
-			}
-			else {
-				return $wp_upload_dir['basedir'] . '/' . $dc_file_location;
-			}
+		if ( ( strlen( $upload_path ) > 0 ) && ( substr( $wp_upload_dir['basedir'], 0, strlen( $upload_path ) ) == $upload_path ) ) {
+			return  $upload_path . '/' . $dc_file_location;
 		}
 		else {
-			return ( !substr( $upload_path, 0, 1) == "/" ? "/" : "") . $upload_path . '/' . $dc_file_location;
+			return $wp_upload_dir['basedir'] . '/' . $dc_file_location;
 		}
 	}
 }

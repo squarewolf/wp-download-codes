@@ -77,19 +77,19 @@ function dc_uninstall() {
  */
 function dc_admin_menu() {
 	// Main menu
-	add_menu_page( 'Settings', 'Download Codes', 8, __FILE__, 'dc_admin_settings');
-
-	// General settings
-	add_submenu_page( __FILE__, 'Download Code Settings', 'Settings', 8, __FILE__, 'dc_admin_settings');
-
-	// Manage Downloads
-	add_submenu_page( __FILE__, 'Manage Releases', 'Manage Releases', 8, 'dc-manage-releases', 'dc_admin_releases');
+	add_menu_page( 'Manage Releases', 'Download Codes', 8, 'dc-manage-releases', 'dc_admin_releases');
 	
-	// Manage Codes
-	add_submenu_page( __FILE__, 'Manage Download Codes', 'Manage Codes', 8, 'dc-manage-codes', 'dc_admin_codes');
+	// Manage releases
+	add_submenu_page( 'dc-manage-releases', 'Manage Releases', 'Manage Releases', 8, 'dc-manage-releases', 'dc_admin_releases');
+	
+	// Manage codes
+	add_submenu_page( 'dc-manage-releases', 'Manage Download Codes', 'Manage Codes', 8, 'dc-manage-codes', 'dc_admin_codes');
+	
+	// General settings
+	add_submenu_page( 'dc-manage-releases', 'Download Code Settings', 'Settings', 8, 'dc-manage-settings', 'dc_admin_settings');
 	
 	// Help
-	add_submenu_page( __FILE__, 'Download Codes Help', 'Help', 8, 'dc-help', 'dc_admin_help');
+	add_submenu_page( 'dc-manage-releases', 'Download Codes Help', 'Help', 8, 'dc-help', 'dc_admin_help');
 }
 
 /**
@@ -246,7 +246,7 @@ function dc_admin_releases() {
 			$message .= "Please choose a valid file for this release.<br />";	
 		}
 		if ( !is_numeric( $post_downloads ) ) {
-			$message .= '"Allowed downloads" must be a number.';
+			$message .= '"Allowed downloads" must be a number.<br />';
 		}
 		
 		// Update or insert if no errors occurred.
@@ -270,11 +270,6 @@ function dc_admin_releases() {
 			$get_action = $post_action;
 			$get_release = $post_release;
 		}
-			
-		// Print message
-		echo '<div id="message" class="updated fade">';
-		echo __( $message );
-		echo '</div>';
 	}
 
 	if ( $get_action == 'edit' || $get_action == 'new' ) {
@@ -283,6 +278,9 @@ function dc_admin_releases() {
 		// Add/Edit release
 		//*********************************************
 		
+		// Get zip files in download folder
+		$files = scandir( dc_file_location() );
+		
 		// Get current release
 		if ( '' != $get_release ) {
 			$release = $wpdb->get_row( "SELECT * FROM " . dc_tbl_releases() . " WHERE ID = $get_release ");
@@ -290,6 +288,23 @@ function dc_admin_releases() {
 		
 		// Write page subtitle
 		echo '<h3>' . ( ( 'new' == $get_action ) ? 'Add New' : 'Edit' ) . ' Release</h3>';
+		
+		// Check if there are any file in the download folder
+		foreach ($files as $filename) {
+			if ( in_array(strtolower( substr($filename,-3) ), dc_file_types() ) ) {
+				$num_download_files++;
+			}
+		}
+		if ( $num_download_files == 0) {
+			$message .= 'No file has been uploaded yet. You may want to upload one or several files to <em>' . dc_file_location() . '</em> first before you add a release.';
+		}
+		
+		// Print the message
+		if ( '' != $message) {
+			echo '<div id="message" class="updated fade">';
+			echo __( $message );
+			echo '</div>';
+		}
 
 		echo '<form method="post" action="admin.php?page=dc-manage-releases">';
 		echo '<input type="hidden" name="release" value="' . $release->ID . '" />';
@@ -302,12 +317,9 @@ function dc_admin_releases() {
 		echo '<td><input type="text" name="title" size="100" value="' . $release->title . '" />';
 		echo '</tr>';
 		
-		// Get zip files in download folder
-		$files = scandir( dc_file_location() );
-		
 		echo '<tr valign="top">';
 		echo '<th scope="row">File</th>';
-		echo '<td>' . dc_file_location( 'short' ) . ' <select name="filename">';
+		echo '<td>' . dc_file_location() . ' <select name="filename">';
 		foreach ($files as $filename) {
 			if ( in_array(strtolower( substr($filename,-3) ), dc_file_types() ) ) {
 				echo '<option' . ( $filename == $release->filename ? ' selected="selected"' : '' ) . '>' . $filename . '</option>';
@@ -339,27 +351,35 @@ function dc_admin_releases() {
 		// Get releases
 		$releases = $wpdb->get_results( "SELECT r.ID, r.title, r.filename, COUNT(d.ID) AS downloads, COUNT(DISTINCT c.ID) AS codes FROM " . dc_tbl_releases() . " r LEFT JOIN (" . dc_tbl_codes() . " c LEFT JOIN ". dc_tbl_downloads() . " d ON d.code = c.ID) ON c.release = r.ID GROUP BY r.ID, r.filename, r.title ORDER BY r.title");
 		
-		echo '<table class="widefat">';
-		
-		echo '<thead>';
-		echo '<tr><th>ID</th><th>Title</th><th>File</th><th># Codes</th><th># Downloads</th><th>Actions</th></tr>';
-		echo '</thead>';
-		
-		echo '<tbody>';
-		foreach ($releases as $release) {
-			echo '<tr><td>' . $release->ID . '</td><td>' . $release->title . '</td>';
-			echo '<td>' . $release->filename . '</td>';
-			echo '<td>' . $release->codes . '</td><td>' . $release->downloads . '</td>';
-			echo '<td><a href="' . $_SERVER["REQUEST_URI"] . '&amp;release=' . $release->ID . '&amp;action=edit">Edit</a> | ';
-			echo '<a href="admin.php?page=dc-manage-codes&amp;release=' . $release->ID . '">Manage codes</a></td></tr>';
+		// Check if the releases are empty
+		if ( sizeof( $releases ) == 0) {
+			echo '<div id="message" class="updated fade">No release has been created yet.</div>';
+			echo '<p>You may want to <a href="admin.php?page=dc-manage-releases&action=new">add a new release</a> first.</p>';
 		}
-		echo '</tbody>';
+		else {
 		
-		echo '<tfoot>';
-		echo '<tr><th>ID</th><th>Title</th><th>File</th><th># Codes</th><th># Downloads</th><th>Actions</th></tr>';
-		echo '</tfoot>';
+			echo '<table class="widefat">';
+			
+			echo '<thead>';
+			echo '<tr><th>ID</th><th>Title</th><th>File</th><th># Codes</th><th># Downloads</th><th>Actions</th></tr>';
+			echo '</thead>';
+			
+			echo '<tbody>';
+			foreach ($releases as $release) {
+				echo '<tr><td>' . $release->ID . '</td><td>' . $release->title . '</td>';
+				echo '<td>' . $release->filename . '</td>';
+				echo '<td>' . $release->codes . '</td><td>' . $release->downloads . '</td>';
+				echo '<td><a href="' . $_SERVER["REQUEST_URI"] . '&amp;release=' . $release->ID . '&amp;action=edit">Edit</a> | ';
+				echo '<a href="admin.php?page=dc-manage-codes&amp;release=' . $release->ID . '">Manage codes</a></td></tr>';
+			}
+			echo '</tbody>';
+			
+			echo '<tfoot>';
+			echo '<tr><th>ID</th><th>Title</th><th>File</th><th># Codes</th><th># Downloads</th><th>Actions</th></tr>';
+			echo '</tfoot>';
 
-		echo '</table>';
+			echo '</table>';
+		}
 
 		// Show link to add a new release
 		echo '<p><a class="button-secondary" href="' . str_replace('&action=new', '', $_SERVER["REQUEST_URI"]) . '&amp;action=new">Add new release</a></p>';		
@@ -407,6 +427,7 @@ function dc_admin_codes() {
 	if ( sizeof( $releases ) == 0) {
 		echo '<div id="message" class="updated fade">No release has been created yet.</div>';
 		echo '<p>You may want to <a href="admin.php?page=dc-manage-releases&action=new">add a new release</a> first.</p>';
+		echo '<p><a class="button-secondary" href="' . str_replace('&action=new', '', $_SERVER["REQUEST_URI"]) . '&amp;action=new">Add new release</a></p>';		
 	}
 	else {
 		echo '<form action="admin.php?page=dc-manage-codes" method="post">';
