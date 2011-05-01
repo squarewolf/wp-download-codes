@@ -50,7 +50,6 @@ function dc_init() {
 	dbDelta($sql);
 }
 
-
 function dc_uninstall() {
 	global $wpdb;
 

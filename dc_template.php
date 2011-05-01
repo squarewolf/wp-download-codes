@@ -48,8 +48,8 @@ function dc_download_form( $atts ) {
 			
 			// Start download if maximum of allowed downloads is not reached
 			if ($downloads->downloads < $release->allowed_downloads) {
-				// Set session variable to indicate that download code was valid
-				$_SESSION['dc_code'] = $code->ID;
+				// Set temporary download lease id (TODO: replace this with a random id in a lease table later)
+				$download_lease_id = md5( 'wp-dl-hash' . $code->ID );
 			}
 			else {
 				$ret = dc_msg( 'max_downloads_reached' );
@@ -74,7 +74,7 @@ function dc_download_form( $atts ) {
 	}
 	
 	$html = '<div class="dc-download-code">';
-	if ( !$_SESSION['dc_code'] ) {
+	if ( !$download_lease_id ) {
 		// Show message
 		if ( $ret != '' ) {
 			$html .= '<p>' . $ret . '</p>';
@@ -90,7 +90,7 @@ function dc_download_form( $atts ) {
 	else {
 		// Show link for download
 		$html .= '<p>' . dc_msg( 'code_valid' ) . '</p>';
-		$html .= '<p><a href="">' . $release->filename . '</a></p>'; 
+		$html .= '<p><a href="?lease=' . $download_lease_id . '">' . $release->filename . '</a></p>'; 
 	}
 	$html .= '</div>';
 	
@@ -103,41 +103,53 @@ function dc_download_form( $atts ) {
 function dc_headers() {
 	global $wpdb;
 	
-	// Start session
-	if ( !session_id() ) {
-		session_start();
-	}
-	
-	if (isset( $_SESSION['dc_code'] )) {
+	if (isset( $_GET['lease'] )) {
 	
 		// Get details for code and release
-		$release = $wpdb->get_row( "SELECT r.*, c.code_suffix FROM " . dc_tbl_releases() . " r INNER JOIN " . dc_tbl_codes() ." c ON c.release = r.ID WHERE c.ID = " . $_SESSION['dc_code']);
+		$release = $wpdb->get_row( "SELECT r.*, c.ID as code, c.code_prefix, c.code_suffix FROM " . dc_tbl_releases() . " r INNER JOIN " . dc_tbl_codes() ." c ON c.release = r.ID WHERE MD5(CONCAT('wp-dl-hash',c.ID)) = '" . $_GET['lease'] . "'" );
 		
-		// Get current IP
-		$IP = $_SERVER['REMOTE_ADDR'];
+		// Get # of downloads with this code
+		$downloads = $wpdb->get_row( "SELECT COUNT(*) AS downloads FROM " . dc_tbl_downloads() . " WHERE code= " . $release->code );
 		
-		// Insert download in downloads table
-		$wpdb->insert(	dc_tbl_downloads(),
-						array( 'code' => $_SESSION['dc_code'], 'IP' => $IP),
-						array( '%d', '%s') );
+		// Start download if maximum of allowed downloads is not reached
+		if ($downloads->downloads < $release->allowed_downloads) {
+			// Get current IP
+			$IP = $_SERVER['REMOTE_ADDR'];
+			
+			// Insert download in downloads table
+			$wpdb->insert(	dc_tbl_downloads(),
+							array( 'code' => $release->code, 'IP' => $IP),
+							array( '%d', '%s') );
+			
+			// Send headers for download
+			header("Pragma: public");
+			header("Expires: 0");
+			header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+			header("Content-Description: File Transfer");
+			header("Content-Type: application/force-download");
+			header("Content-Type: application/octet-stream");
+			header("Content-Type: application/download");
+			header("Content-Disposition: attachment; filename=\"" . $release->filename . "\"");
+			header("Content-Transfer-Encoding: binary");
+			header("Content-Length: ".filesize( dc_file_location() . $release->filename ));
+			flush();
 
-		// Store details in session variables
-		$_SESSION['dc_filename'] = $release->filename;
-		$_SESSION['dc_location'] = dc_file_location() . $release->filename;
-		
-		// Redirect to download page
-		$wp_subfolder = str_replace( 'http://', '', get_bloginfo( 'wpurl' ) );
-		$wp_subfolder = str_replace( 'https://', '', $wp_subfolder );
-		$arr_folders = explode( '/', $wp_subfolder );
-		if ( sizeof( $arr_folders ) == 1) {
-			$wp_subfolder = '';
+			// Stream file
+			$handle = fopen( dc_file_location() . $release->filename, 'rb' );
+			$chunksize = 1*(1024*1024); 
+			$buffer = '';
+			if ($handle === false) {
+				exit;
+			}
+			while (!feof($handle)) {
+				$buffer = fread($handle, $chunksize);
+				echo $buffer;
+				flush();
+			}
+
+			// Close file
+			fclose($handle);
 		}
-		else {
-			$wp_subfolder = $arr_folders[1] . '/';
-		}
-		wp_redirect( 'http://' . $_SERVER['HTTP_HOST'] . '/' . $wp_subfolder . 'wp-content/plugins/wp-download-codes/dc_download.php' );
-		exit;
 	}
 }
-
 ?>

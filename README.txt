@@ -3,7 +3,7 @@ Contributors: misanthrop
 Donate link: http://wordpress.org/extend/plugins/wp-download-codes/
 Tags: download, download code, code generator
 Requires at least: 2.5
-Tested up to: 3.0.1
+Tested up to: 3.1.2
 Stable tag: 1.2.2
 
 The plugin enables to generation and management of download codes for .zip files. It was written to enable the free download of records and CDs with dedicated codes printed on the cover of the releases or on separate download cards.
@@ -47,6 +47,9 @@ Most providers do not allow an upload quota which is sufficient to upload larger
 
 == Changelog ==
 
+= 1.3 =
+* Changed download mechanism in order to get fix the header issues appearing with many firefox versions
+
 = 1.2.2 =
 * Changed menu order in adminstration
 * Fixed the determination of the upload path which was sometimes not working for blank installations
@@ -72,7 +75,6 @@ Most providers do not allow an upload quota which is sufficient to upload larger
 * Enabled the [download-code] shortcode without having to provide the release ID.
 * Fixed problems ocurring from side effects with other plugins during the sending of filestream headers.
 * Fixed problem with insufficient memory occuring in some PHP environments.
-
 
 = 1.0.7 =
 * Fixed different behavior of upload path determination (absolute, relative).
