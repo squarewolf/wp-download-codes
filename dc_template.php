@@ -90,7 +90,7 @@ function dc_download_form( $atts ) {
 	else {
 		// Show link for download
 		$html .= '<p>' . dc_msg( 'code_valid' ) . '</p>';
-		$html .= '<p><a href="?lease=' . $download_lease_id . '">' . $release->filename . '</a></p>'; 
+		$html .= '<p><a href="?lease=' . $download_lease_id . '">' . ( $release->artist ? $release->artist . ' - ' : '' ) . $release->title . '</a> ' . format_bytes( filesize( dc_file_location() . $release->filename ) ) . '</p>'; 
 	}
 	$html .= '</div>';
 	
