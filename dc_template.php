@@ -98,7 +98,7 @@ function dc_download_form( $atts ) {
 }
 
 /**
- * Sends headers to redirect to dc_download.php when download code was entered successfully.
+ * Sends headers for file download if a lease is passed as a parameter to the URL
  */
 function dc_headers() {
 	global $wpdb;

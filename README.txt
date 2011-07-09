@@ -3,8 +3,8 @@ Contributors: misanthrop
 Donate link: http://wordpress.org/extend/plugins/wp-download-codes/
 Tags: download, download code, code generator
 Requires at least: 2.5
-Tested up to: 3.1.2
-Stable tag: 1.2.2
+Tested up to: 3.2
+Stable tag: 1.3
 
 The plugin enables to generation and management of download codes for .zip files. It was written to enable the free download of records and CDs with dedicated codes printed on the cover of the releases or on separate download cards.
 
@@ -46,6 +46,17 @@ Most providers do not allow an upload quota which is sufficient to upload larger
 
 
 == Changelog ==
+
+= 2.0 =
+* Added an (optional) artist field so that releases can have a title (album name) and artist
+* Introduced "code groups" in order to be able to created and delete batches of code groups with the same code prefixes
+* Added a new field to the settings page so that users can customize what set of characters their download codes are composed from (this also avoid confusion between numbers and letter like between 0 and O as well as between l and 1)
+* Changed the download link that users click on to display the release's title and the file size (rather than using the filename as the link text)
+* Updated HTML markup for the forms and tables so that it matches WordPress conventions (label tags, descriptions, etc)
+* Moved a lot of the common DB calls into individual functions in dc_functions.php
+* Added a JS confirm alert if you try to delete a release or a batch of download codes to avoid accidental deletions
+* Added a similar JS confirm before the user finalizes a batch of codes (since it's irreversible)
+* Added "lightbox" style popups to display the list of download codes or the download report. It also works on the off-chance that JS isn't enabled.
 
 = 1.3 =
 * Changed download mechanism in order to get fix the header issues appearing with many firefox versions

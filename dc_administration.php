@@ -60,8 +60,34 @@ function dc_init() {
 				 );";
 	dbDelta( $sql );
 	
-	// PUT CODE HERE TO DETECT IF USER IS UPGRADING FROM OLDER VERSION
-	// UPDATE DB VALUES IF NECESSARY IF IT IS AN UPGRADE
+	// In version 2.0, code groups were introduced, therefore when
+	// upgrading from a prior version, it has to be ensured
+	// that initial code groups are created for every group
+	// of code prefixes
+	
+	// Retrieve all codes without a code group
+	$sql = "
+		SELECT	DISTINCT c.code_prefix AS `prefix`, c.release AS `release`
+		FROM	". dc_tbl_codes() . " c
+		WHERE	c.group IS NULL OR c.group = 0";
+	$code_groups = $wpdb->get_results( $sql );
+	foreach ( $code_groups as $code_group ) {
+		// Create a new code group
+		$wpdb->insert(	dc_tbl_code_groups(), array( 'release' => $code_group->release ), array ( '%d' ));
+		
+		// Get the id of the new code group
+		$code_group_id = $wpdb->insert_id;
+		
+		// Update the affected codes with the new code group id
+		$wpdb->update(	dc_tbl_codes(), 
+						array( 'group' => $code_group_id ),
+						array( 'code_prefix' => $code_group->prefix, 'release' => $code_group->release ),
+						array( '%d' ),
+						array( '%s', '%d' ));
+	}	
+	
+	// Set current plugin version (for future use)
+	update_option( 'dc_version', '2.0' );
 }
 
 /**
@@ -80,6 +106,7 @@ function dc_uninstall() {
 	delete_option( 'dc_msg_max_attempts_reached' );
 	delete_option( 'dc_file_location' );
 	delete_option( 'dc_file_types' );
+	delete_option( 'dc_version' );
 	
 	// Delete database tables
 	$wpdb->query( "DROP TABLE " . dc_tbl_downloads() );
