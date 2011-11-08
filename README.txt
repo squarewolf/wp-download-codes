@@ -4,7 +4,7 @@ Donate link: http://wordpress.org/extend/plugins/wp-download-codes/
 Tags: download, download code, code generator
 Requires at least: 2.5
 Tested up to: 3.2
-Stable tag: 2.0
+Stable tag: 2.1
 
 The plugin enables to generation and management of download codes for .zip files. It was written to enable the free download of records and CDs with dedicated codes printed on the cover of the releases or on separate download cards.
 
@@ -31,6 +31,7 @@ With the plugin you can:
 1. Create a new release and assign a valid zip file to it.
 1. Create download codes for the release via 'Manage codes' and make them final.
 1. Put `[download-code id="xyz"]` in a page or post, where "xyz" is the ID of the respective release. Alternatively, you can write `[download-code]` without an ID to allow any download code. In the latter case, the download code should be assigned directly to a release.
+1. Since version 2.1 you can provide your users with a direct link to the download code form using the "yourcode" query parameter (e.g. http://yourwordpressblog.com/download/?yourcode=XYZ).
 
 == Frequently Asked Questions ==
 
@@ -46,6 +47,9 @@ Most providers do not allow an upload quota which is sufficient to upload larger
 
 
 == Changelog ==
+
+= 2.1 =
+* Added feature for direct download code links through the query parameter "yourcode"
 
 = 2.0 =
 * Added an (optional) artist field so that releases can have a title (album name) and artist

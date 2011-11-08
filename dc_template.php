@@ -21,6 +21,8 @@ function dc_download_form( $atts ) {
 		'bar' => 'default bar',
 	), $atts));
 	
+	$post_code = "";
+	
 	if (isset( $_POST['submit'] )) {
 		// Get current IP
 		$IP = $_SERVER['REMOTE_ADDR'];
@@ -83,14 +85,14 @@ function dc_download_form( $atts ) {
 		// Display form
 		$html .= '<form action="" name="dc_form" method="post">';
 		$html .= '<p><input type="hidden" name="release" value="' . $id . '" />'; 
-		$html .= dc_msg( 'code_enter' ) .' <input type="text" name="code" value="' . $post_code . '" size="20" /> ';
+		$html .= dc_msg( 'code_enter' ) .' <input type="text" name="code" value="' . ( $post_code != "" ? $post_code : ( $_GET['yourcode'] != "" ? $_GET['yourcode'] : "" ) ) . '" size="20" /> ';
 		$html .= '<input type="submit" name="submit" value="' . __( 'Submit') . '" /></p>';
 		$html .= '</form>';
 	}
 	else {
 		// Show link for download
 		$html .= '<p>' . dc_msg( 'code_valid' ) . '</p>';
-		$html .= '<p><a href="?lease=' . $download_lease_id . '">' . ( $release->artist ? $release->artist . ' - ' : '' ) . $release->title . '</a> ' . format_bytes( filesize( dc_file_location() . $release->filename ) ) . '</p>'; 
+		$html .= '<p><a href="http://' . $_SERVER['HTTP_HOST'] . ( strpos( $_SERVER['REQUEST_URI'], '?' ) >= 0 ? substr( $_SERVER['REQUEST_URI'], 0, strpos( $_SERVER['REQUEST_URI'], '?' ) ) : $_SERVER['REQUEST_URI'] ) . '?lease=' . $download_lease_id . '">' . ( $release->artist ? $release->artist . ' - ' : '' ) . $release->title . '</a> ' . format_bytes( filesize( dc_file_location() . $release->filename ) ) . '</p>'; 
 	}
 	$html .= '</div>';
 	
@@ -98,12 +100,15 @@ function dc_download_form( $atts ) {
 }
 
 /**
- * Sends headers for file download if a lease is passed as a parameter to the URL
+ * Sends headers to redirect to dc_download.php when download code was entered successfully.
  */
 function dc_headers() {
 	global $wpdb;
 	
 	if (isset( $_GET['lease'] )) {
+	
+		// Set timeout
+		set_time_limit( 1200 );
 	
 		// Get details for code and release
 		$release = $wpdb->get_row( "SELECT r.*, c.ID as code, c.code_prefix, c.code_suffix FROM " . dc_tbl_releases() . " r INNER JOIN " . dc_tbl_codes() ." c ON c.release = r.ID WHERE MD5(CONCAT('wp-dl-hash',c.ID)) = '" . $_GET['lease'] . "'" );
