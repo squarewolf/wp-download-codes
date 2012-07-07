@@ -3,7 +3,7 @@ Contributors: misanthrop
 Donate link: http://wordpress.org/extend/plugins/wp-download-codes/
 Tags: download, download code, code generator
 Requires at least: 2.5
-Tested up to: 3.2
+Tested up to: 3.4
 Stable tag: 2.1
 
 The plugin enables to generation and management of download codes for .zip files. It was written to enable the free download of records and CDs with dedicated codes printed on the cover of the releases or on separate download cards.
@@ -47,6 +47,9 @@ Most providers do not allow an upload quota which is sufficient to upload larger
 
 
 == Changelog ==
+
+= 2.1.1 =
+* Included MYSQL patch from Sean Patrick Rhorer to enable display of releases even with a restrictive host setting for max join size
 
 = 2.1 =
 * Added feature for direct download code links through the query parameter "yourcode"

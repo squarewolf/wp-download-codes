@@ -71,6 +71,7 @@ function dc_init() {
 		FROM	". dc_tbl_codes() . " c
 		WHERE	c.group IS NULL OR c.group = 0";
 	$code_groups = $wpdb->get_results( $sql );
+		
 	foreach ( $code_groups as $code_group ) {
 		// Create a new code group
 		$wpdb->insert(	dc_tbl_code_groups(), array( 'release' => $code_group->release ), array ( '%d' ));
@@ -306,6 +307,8 @@ function dc_admin_settings() {
  */
 function dc_admin_releases() {
 	global $wpdb;
+	
+	$wpdb->query('SET OPTION SQL_BIG_SELECTS = 1');
 
 	// Get parameters
 	$get_action 	= $_GET['action'];
@@ -511,6 +514,8 @@ function dc_admin_releases() {
  */
 function dc_admin_codes() {
 	global $wpdb;
+	
+	$wpdb->query('SET OPTION SQL_BIG_SELECTS = 1');
 
 	// Get parameters
 	$get_release 	= $_GET['release'];
