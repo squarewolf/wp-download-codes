@@ -138,6 +138,7 @@ function dc_headers() {
 			header("Content-Transfer-Encoding: binary");
 			header("Content-Length: ".filesize( dc_file_location() . $release->filename ));
 			flush();
+			ob_end_flush();
 
 			// Stream file
 			$handle = fopen( dc_file_location() . $release->filename, 'rb' );
