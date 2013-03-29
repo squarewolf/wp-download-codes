@@ -5,11 +5,11 @@ Plugin URI: http://wordpress.org/extend/plugins/wp-download-codes/
 
 Description: The plugin enables to generation and management of download codes for .zip files. It was written to enable the free download of records and CDs with dedicated codes printed on the cover of the releases or on separate download cards.
 
-Version: 2.1.2
+Version: 2.1.3
 Author: misanthrop, spalmer
 Author URI: http://www.misantropolis.de, http://quoperative.com
 
-	Copyright 2009-2012 Armin Fischer  (email : misantropolis@gmail.com)
+	Copyright 2009-2013 Armin Fischer  (email : misantropolis@gmail.com)
 	
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by

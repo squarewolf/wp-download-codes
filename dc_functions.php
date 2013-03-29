@@ -270,20 +270,22 @@ function dc_get_releases()
 	global $wpdb;
 	return $wpdb->get_results( 
 		"SELECT 	r.ID, 
-					r.title, 
-					r.artist, 
-					r.filename, 
-					COUNT(d.ID) AS downloads,
-					COUNT(DISTINCT c.ID) AS codes
-		FROM 		" . dc_tbl_releases() . " r 
-		LEFT JOIN 	(" . dc_tbl_codes() . " c
-		LEFT JOIN 	". dc_tbl_downloads() . " d 
-		ON 			d.code = c.ID) 
-		ON 			c.release = r.ID 
-		GROUP BY 	r.ID, 
-					r.filename,
-					r.title,
-					r.artist
+		r.title, 
+		r.artist, 
+		r.filename,
+		ccq.code_count AS codes,
+		dcq.download_count AS downloads
+		FROM 	(" . dc_tbl_releases() . " r 
+				LEFT JOIN (SELECT `release`, COUNT(*) AS code_count
+					FROM " . dc_tbl_codes() . "
+					GROUP BY `release`) AS ccq 
+				ON ccq.release = r.ID)
+				LEFT JOIN (SELECT `release`, COUNT(*) AS download_count
+					FROM ". dc_tbl_downloads() . " d
+					INNER JOIN " . dc_tbl_codes() . " c
+					ON d.code = c.id
+					GROUP BY `release`) AS dcq
+				ON dcq.release = r.ID
 		ORDER BY 	r.artist, r.title");
 }
 
