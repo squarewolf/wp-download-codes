@@ -63,6 +63,13 @@ function dc_code_chars() {
 }
 
 /**
+ * Returns header setting for content type 
+ */
+function dc_header_content_type() {
+	return ( '' == get_option( 'dc_header_content_type' ) ? DC_HEADER_CONTENT_TYPE : get_option( 'dc_header_content_type' ) );
+}
+
+/**
  * Returns the full path of the download file location.
  */
 function dc_file_location() {
@@ -519,4 +526,41 @@ function format_bytes( $filesize )
     return round($filesize, 2) . $units[$i];
 }
 
+/**
+ * Returns the MIME content type of a given file.
+ */
+function get_mime_content_type( $file )
+{
+	$mime_types = array(
+			"pdf"=>"application/pdf"
+			,"exe"=>"application/octet-stream"
+			,"zip"=>"application/zip"
+			,"docx"=>"application/msword"
+			,"doc"=>"application/msword"
+			,"xls"=>"application/vnd.ms-excel"
+			,"ppt"=>"application/vnd.ms-powerpoint"
+			,"gif"=>"image/gif"
+			,"png"=>"image/png"
+			,"jpeg"=>"image/jpg"
+			,"jpg"=>"image/jpg"
+			,"mp3"=>"audio/mpeg"
+			,"wav"=>"audio/x-wav"
+			,"mpeg"=>"video/mpeg"
+			,"mpg"=>"video/mpeg"
+			,"mpe"=>"video/mpeg"
+			,"mov"=>"video/quicktime"
+			,"avi"=>"video/x-msvideo"
+			,"3gp"=>"video/3gpp"
+			,"css"=>"text/css"
+			,"jsc"=>"application/javascript"
+			,"js"=>"application/javascript"
+			,"php"=>"text/html"
+			,"htm"=>"text/html"
+			,"html"=>"text/html"
+	);
+
+	$extension = strtolower(end(explode('.',$file)));
+	
+	return $mime_types[$extension];
+}
 ?>

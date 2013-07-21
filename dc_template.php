@@ -126,21 +126,39 @@ function dc_headers() {
 							array( 'code' => $release->code, 'IP' => $IP),
 							array( '%d', '%s') );
 			
-			// Send headers for download
-			header("Pragma: public");
-			header("Expires: 0");
-			header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-			header("Content-Description: File Transfer");
-			header("Content-Type: application/force-download");
-			header("Content-Type: application/octet-stream");
-			header("Content-Type: application/download");
-			header("Content-Disposition: attachment; filename=\"" . $release->filename . "\"");
-			header("Content-Transfer-Encoding: binary");
-			header("Content-Length: ".filesize( dc_file_location() . $release->filename ));
+			// Send header for cache
+			header( 'Pragma: public' );
+			header( 'Expires: 0' );
+			header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
+			header( 'Content-Description: File Transfer' );
+			
+			// Send header for content type
+			$content_type = dc_header_content_type();
+			if ( $content_type == DC_HEADER_CONTENT_TYPE) {
+				// Send MIME type of current file
+				header( 'Content-Type: ' . get_mime_content_type( dc_file_location() . $release->filename ) );
+			}
+			else {
+				// Override content type with header setting
+				header( 'Content-Type: ' . $content_type );
+			}
+			
+			// Send header for content disposition
+			if ( strpos ( $_SERVER [ 'HTTP_USER_AGENT' ], "MSIE" ) > 0 )
+			{
+				header( 'Content-Disposition: attachment; filename="' . urlencode ( $release->filename ) . '"' );
+			}
+			else
+			{
+				header( 'Content-Disposition: attachment; filename*=UTF-8\'\'' . urlencode ( $release->filename ) );
+			}
+			
+			// Send header for content length
+			header( 'Content-Length: '.filesize( dc_file_location() . $release->filename ));
+			
+			// Stream file
 			flush();
 			ob_end_flush();
-
-			// Stream file
 			$handle = fopen( dc_file_location() . $release->filename, 'rb' );
 			$chunksize = 1*(1024*1024); 
 			$buffer = '';

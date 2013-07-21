@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/extend/plugins/wp-download-codes/
 
 Description: The plugin enables to generation and management of download codes for .zip files. It was written to enable the free download of records and CDs with dedicated codes printed on the cover of the releases or on separate download cards.
 
-Version: 2.1.3
+Version: 2.2.0
 Author: misanthrop, spalmer
 Author URI: http://www.misantropolis.de, http://quoperative.com
 
@@ -25,7 +25,6 @@ Author URI: http://www.misantropolis.de, http://quoperative.com
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-
 /**
  * Default values
  */
@@ -34,14 +33,15 @@ define( DC_MAX_ATTEMPTS, 3 );
 define( DC_ALLOWED_DOWNLOADS, 3 );
 define( DC_FILE_TYPES, 'zip, mp3' );
 define( DC_CODE_CHARS, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890' );
+define( DC_HEADER_CONTENT_TYPE, 'Default (MIME Type)');
 
 /**
  * Inclusion of administration, template and general functions.
  */
 
-   include( 'dc_administration.php' );
-   include( 'dc_template.php' );
-   include( 'dc_functions.php' );
+include( 'dc_administration.php' );
+include( 'dc_template.php' );
+include( 'dc_functions.php' );
 
 /**
  * Addition of dc functions to hooks.

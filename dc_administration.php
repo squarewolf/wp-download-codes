@@ -100,6 +100,7 @@ function dc_uninstall() {
 	// Delete wordpress options
 	delete_option( 'dc_zip_location' );
 	delete_option( 'dc_max_attempts' );
+	delete_option( 'dc_header_content_type' );
 	delete_option( 'dc_msg_code_enter' );
 	delete_option( 'dc_msg_code_valid' );
 	delete_option( 'dc_msg_code_invalid' );
@@ -174,7 +175,6 @@ function dc_admin_settings() {
 			if ( substr( $dc_file_location, -1 ) != '/' ) {
 				$dc_file_location .= '/';
 			}
-
 			update_option( 'dc_file_location', $dc_file_location );
 		}
 		
@@ -183,8 +183,16 @@ function dc_admin_settings() {
 			update_option( 'dc_max_attempts' , $dc_max_attempts );
 		}
 		
+		// Update file types
+		if ( '' != trim( $_POST['dc_file_types'] ) ) {
+			update_option( 'dc_file_types' , trim( $_POST['dc_file_types'] ) );
+		}
+		
 		// Update character list
 		update_option( 'dc_code_chars' , $_POST['dc_code_chars'] == '' ? DC_CODE_CHARS : $_POST['dc_code_chars'] );
+		
+		// Update header settings
+		update_option( 'dc_header_content_type' , $_POST['dc_header_content_type'] == '' ? DC_HEADER_CONTENT_TYPE : $_POST['dc_header_content_type'] );
 		
 		// Update messages
 		update_option( 'dc_msg_code_enter' , $_POST['dc_msg_code_enter'] );
@@ -192,11 +200,6 @@ function dc_admin_settings() {
 		update_option( 'dc_msg_code_invalid' , $_POST['dc_msg_code_invalid'] );
 		update_option( 'dc_msg_max_downloads_reached' , $_POST['dc_msg_max_downloads_reached'] );
 		update_option( 'dc_msg_max_attempts_reached' , $_POST['dc_msg_max_attempts_reached'] );
-		
-		// Update file types
-		if ( '' != trim( $_POST['dc_file_types'] ) ) {
-			update_option( 'dc_file_types' , trim( $_POST['dc_file_types'] ) );
-		}
 		
 		// Print message
 		echo dc_admin_message( 'The settings were updated.' );	
@@ -260,6 +263,33 @@ function dc_admin_settings() {
 	
 	echo '</table>';
 	
+	/**
+	 * Headers
+	 */
+	
+	echo '<h3>Header Settings</h3>';
+	
+	echo '<p>Finetune request headers to fix client-server issues:</p>';
+	
+	echo '<table class="form-table">';
+	
+	// Content type
+	$dc_header_content_type = dc_header_content_type();
+	$content_type_options = array( 'Default (MIME Type)', 'application/force-download', 'application/octet-stream', 'application/download' );
+	echo '<tr valign="top">';
+	echo '<th scope="row"><label for="headers-content-type">Content type</label></th>';
+	echo '<td><select name="dc_header_content_type" id="headers-content-type">';
+	foreach ( $content_type_options as $option) {
+		echo '<option' . ( $option == $dc_header_content_type ? ' selected="selected"' : '') . '>' . $option . '</option>';
+	}
+	echo '</select> <span class="description">Override default content type (which is the MIME type of the download file)</span></td>';	
+	echo '</tr>';
+	
+	echo '</table>';
+	
+	/**
+	 * Messages
+	 */
 	
 	echo '<h3>Messages</h3>';
 	
@@ -409,14 +439,14 @@ function dc_admin_releases() {
 		
 		echo '<table class="form-table">';
 		
-		// title
+		// Title
 		echo '<tr valign="top">';
 		echo '<th scope="row"><label for="release-title">Title</label></th>';
 		echo '<td><input type="text" name="title" id="release-title" class="regular-text" value="' . $release->title . '" />';
 		echo ' <span class="description">For example, the album title</span></td>';
 		echo '</tr>';
 		
-		// artist
+		// Artist
 		echo '<tr valign="top">';
 		echo '<th scope="row"><label for="release-artist">Artist (optional)</label></th>';
 		echo '<td><input type="text" name="artist" id="release-artist" class="regular-text" value="' . $release->artist . '" />';
@@ -435,7 +465,7 @@ function dc_admin_releases() {
 		echo '</select></td>';
 		echo '</tr>';
 		
-		// allowed downloads
+		// Allowed downloads
 		echo '<tr valign="top">';
 		echo '<th scope="row"><label for="release-downloads">Allowed downloads</label></th>';
 		echo '<td><input type="text" name="downloads" id="release-downloads" class="small-text" value="' . ( $release->allowed_downloads > 0 ? $release->allowed_downloads : DC_ALLOWED_DOWNLOADS ) . '" />';
@@ -444,7 +474,7 @@ function dc_admin_releases() {
 		
 		echo '</table>';
 		
-		// submit
+		// Submit
 		echo '<p class="submit">';
 		echo '<input type="submit" name="submit" class="button-primary" value="' . ( $get_action == 'edit' ? 'Save Changes' : 'Add Release' ) . '" />';
 		echo '</p>';

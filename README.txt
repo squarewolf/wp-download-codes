@@ -4,7 +4,7 @@ Donate link: http://wordpress.org/extend/plugins/wp-download-codes/
 Tags: download, download code, code generator
 Requires at least: 2.5
 Tested up to: 3.4
-Stable tag: 2.1.3
+Stable tag: 2.2.0
 
 The plugin enables to generation and management of download codes for .zip files. It was written to enable the free download of records and CDs with dedicated codes printed on the cover of the releases or on separate download cards.
 
@@ -43,10 +43,18 @@ No, currently each download code form must have assigned the ID of a specific re
 
 Most providers do not allow an upload quota which is sufficient to upload larger zip files. Therefore, an option using an upload form has not been considered yet.
 
+= Can I influence the request headers which are being sent for each download file?
+
+Yes, you can override the content type header which by default sends the MIMI content type of the download file. If this does not work in your environment, you can specify alternative fixed headers like application/download.
+
 == Screenshots ==
 
 
 == Changelog ==
+
+= 2.2.0 =
+* Refined download headers to hopefully fix remaining client-server issues with the plugin.
+* Introduced admin setting DC_HEADER_CONTENT_TYPE to override the default MIME content type header with others.
 
 = 2.1.3 =
 * Improved query for a quicker display of releases in "Manage Releases"
