@@ -43,7 +43,7 @@ No, currently each download code form must have assigned the ID of a specific re
 
 Most providers do not allow an upload quota which is sufficient to upload larger zip files. Therefore, an option using an upload form has not been considered yet.
 
-= Can I influence the request headers which are being sent for each download file?
+= Can I influence the request headers which are being sent for each download file? =
 
 Yes, you can override the content type header which by default sends the MIMI content type of the download file. If this does not work in your environment, you can specify alternative fixed headers like application/download.
 
