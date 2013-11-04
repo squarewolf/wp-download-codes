@@ -159,20 +159,7 @@ function dc_headers() {
 			// Stream file
 			flush();
 			ob_end_flush();
-			$handle = fopen( dc_file_location() . $release->filename, 'rb' );
-			$chunksize = 1*(1024*1024); 
-			$buffer = '';
-			if ($handle === false) {
-				exit;
-			}
-			while (!feof($handle)) {
-				$buffer = fread($handle, $chunksize);
-				echo $buffer;
-				flush();
-			}
-
-			// Close file
-			fclose($handle);
+			readfile( dc_file_location() . $release->filename );
 		}
 	}
 }
